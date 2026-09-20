@@ -1,0 +1,232 @@
+.loginPage {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg-main);
+}
+
+.topBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 48px;
+  border-bottom: 1px solid var(--border-dark);
+  background: var(--bg-surface);
+}
+
+.brandNav {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.brandLogo {
+  font-size: 20px;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.brandDot {
+  width: 8px;
+  height: 8px;
+  background-color: var(--accent-red);
+}
+
+.badgeTag {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 4px 10px;
+  border: 1px solid var(--border-dark);
+  background: var(--bg-main);
+}
+
+.systemStatus {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.statusIndicator {
+  width: 6px;
+  height: 6px;
+  background-color: #10B981;
+  border-radius: 50%;
+  box-shadow: 0 0 6px #10B981;
+}
+
+.mainContent {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+}
+
+.authCard {
+  width: 100%;
+  max-width: 680px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-dark);
+  box-shadow: 4px 4px 0px #111111;
+  padding: 40px 44px;
+  box-sizing: border-box;
+}
+
+.cardHeader {
+  margin-bottom: 28px;
+  border-left: 4px solid var(--accent-red);
+  padding-left: 18px;
+}
+
+.cardTitle {
+  font-size: 28px;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  margin-bottom: 6px;
+}
+
+.cardSubtitle {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.fieldGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fieldLabel {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-primary);
+  display: flex;
+  justify-content: space-between;
+}
+
+.fieldHint {
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.textInput {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  padding: 12px 14px;
+  background: var(--bg-main);
+  border: 1px solid var(--border-dark);
+  color: var(--text-primary);
+  outline: none;
+  transition: all 0.15s ease;
+}
+
+.textInput:focus {
+  border-color: var(--accent-red);
+  background: #FFFFFF;
+  box-shadow: 2px 2px 0px #111111;
+}
+
+.errorBox {
+  background: #FEE2E2;
+  border: 1px solid #EF4444;
+  color: #991B1B;
+  padding: 10px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.submitBtn {
+  background: var(--accent-red);
+  color: #FFFFFF;
+  border: 1px solid var(--border-dark);
+  padding: 14px 24px;
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  cursor: pointer;
+  box-shadow: 2px 2px 0px #111111;
+  transition: all 0.15s ease;
+}
+
+.submitBtn:hover:not(:disabled) {
+  background: var(--accent-red-hover);
+  transform: translateY(-1px);
+  box-shadow: 3px 3px 0px #111111;
+}
+
+.submitBtn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.secondaryActions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 20px;
+  font-size: 12px;
+}
+
+.textLink {
+  color: var(--text-secondary);
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.textLink:hover {
+  color: var(--accent-red);
+}
+
+.footerInfo {
+  padding: 24px 48px;
+  border-top: 1px solid var(--border-light);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+@media (max-width: 640px) {
+  .topBar, .footerInfo {
+    padding: 16px 20px;
+  }
+  .authCard {
+    padding: 24px 18px;
+  }
+  .cardTitle {
+    font-size: 22px;
+  }
+}

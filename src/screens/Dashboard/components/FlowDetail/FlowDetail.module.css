@@ -1,0 +1,153 @@
+.flowDetailContainer {
+  flex: 1;
+  overflow-y: auto;
+  padding: 32px 40px;
+  background: var(--bg-main);
+  min-width: 0;
+}
+
+.flowHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--border-dark);
+  margin-bottom: 28px;
+}
+
+.tagRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.serviceTag {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 8px;
+  background: #111111;
+  color: #FFFFFF;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.srsTag {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 8px;
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  border: 1px solid var(--border-dark);
+}
+
+.roleTag {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 800;
+  padding: 4px 8px;
+  background: var(--accent-red);
+  color: #FFFFFF;
+  letter-spacing: 0.05em;
+}
+
+.flowTitleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.flowTitle {
+  font-size: 32px;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+
+.flowQuickStat {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.statPill {
+  padding: 4px 10px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-light);
+  font-weight: 700;
+}
+
+/* Criteria Section */
+.criteriaSection {
+  margin-bottom: 32px;
+}
+
+.criteriaSectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.criteriaSectionTitle {
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.criteriaSectionTitle::before {
+  content: "";
+  display: inline-block;
+  width: 5px;
+  height: 16px;
+  background: var(--text-primary);
+}
+
+.criteriaBadge {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 800;
+  padding: 5px 12px;
+  border: 1px solid var(--border-dark);
+}
+
+.criteriaBadge.allPassed {
+  background: #111111;
+  color: #FFFFFF;
+}
+
+.criteriaBadge.hasFailed {
+  background: var(--accent-red);
+  color: #FFFFFF;
+  border-color: var(--accent-red);
+}
+
+.criteriaGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+@media (max-width: 900px) {
+  .criteriaGrid {
+    grid-template-columns: 1fr;
+  }
+  .flowDetailContainer {
+    padding: 20px;
+  }
+  .flowTitle {
+    font-size: 24px;
+  }
+}

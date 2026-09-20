@@ -1,0 +1,168 @@
+/* Modernist Design System - QC PORTAL */
+:root {
+  --bg-main: #F4F4F2;
+  --bg-surface: #FFFFFF;
+  --bg-subtle: #EAEAE6;
+  --bg-dark: #121212;
+  --text-primary: #111111;
+  --text-secondary: #555550;
+  --text-muted: #888880;
+  --accent-red: #E5342A;
+  --accent-red-hover: #C9241B;
+  --accent-red-subtle: #FDF0EF;
+  --border-light: #E0E0DB;
+  --border-dark: #111111;
+  --border-hairline: 1px solid var(--border-light);
+  --border-strong: 1px solid var(--border-dark);
+  --border-red: 1px solid var(--accent-red);
+  
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', Consolas, Monaco, monospace;
+  
+  --radius-none: 0px;
+  --shadow-modern: 0 4px 20px rgba(0, 0, 0, 0.04);
+  --shadow-hover: 0 8px 30px rgba(0, 0, 0, 0.08);
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  background-color: var(--bg-main);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+  color: inherit;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+code, pre {
+  font-family: var(--font-mono);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-main);
+}
+::-webkit-scrollbar-thumb {
+  background: #C4C4C0;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #999990;
+}
+
+/* Common Modernist Utilities */
+.hairline-border {
+  border: var(--border-hairline);
+}
+
+.mono-text {
+  font-family: var(--font-mono);
+}
+
+.red-accent {
+  color: var(--accent-red);
+}
+
+.red-bg {
+  background-color: var(--accent-red);
+  color: #FFFFFF;
+}
+
+.uppercase-track {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+}
+
+/* Global Portal Mode Nav Switcher */
+.portal-top-nav-tabs {
+  position: fixed;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  display: inline-flex;
+  align-items: center;
+  background: var(--bg-main);
+  border: 1px solid var(--border-dark);
+  padding: 2px;
+  box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.15);
+}
+
+.portal-nav-tab {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 6px 14px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.portal-nav-tab:hover {
+  color: var(--text-primary);
+}
+
+.portal-nav-tab.active {
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  border-color: var(--border-dark);
+  font-weight: 900;
+  box-shadow: 1px 1px 0px rgba(0, 0, 0, 0.08);
+}
+
+.live-nav-dot {
+  width: 6px;
+  height: 6px;
+  background: #10B981;
+  border-radius: 50%;
+  display: inline-block;
+  animation: liveNavPulse 1.8s infinite;
+}
+
+@keyframes liveNavPulse {
+  0% { transform: scale(0.9); opacity: 0.8; }
+  50% { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(0.9); opacity: 0.8; }
+}
+
+@media (max-width: 860px) {
+  .portal-top-nav-tabs {
+    top: auto;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    box-shadow: 3px 3px 0px #111111;
+  }
+}

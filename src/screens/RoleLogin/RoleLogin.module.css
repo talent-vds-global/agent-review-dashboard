@@ -1,0 +1,267 @@
+.loginContainer {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg-main);
+}
+
+.topBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 48px;
+  border-bottom: 1px solid var(--border-dark);
+  background: var(--bg-surface);
+}
+
+.logoArea {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.brandName {
+  font-size: 20px;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.brandDot {
+  width: 8px;
+  height: 8px;
+  background-color: var(--accent-red);
+  display: inline-block;
+}
+
+.taglineBadge {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 4px 10px;
+  border: 1px solid var(--border-dark);
+  background: var(--bg-main);
+}
+
+.topRightActions {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.loginSwitchBtn {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 6px 14px;
+  background: var(--bg-main);
+  border: 1px solid var(--border-dark);
+  color: var(--text-primary);
+  transition: all 0.15s ease;
+  cursor: pointer;
+}
+
+.loginSwitchBtn:hover {
+  background: #111111;
+  color: #FFFFFF;
+}
+
+.systemStatus {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.statusIndicator {
+  width: 6px;
+  height: 6px;
+  background-color: #10B981;
+  border-radius: 50%;
+  box-shadow: 0 0 6px #10B981;
+}
+
+.heroSection {
+  padding: 72px 48px 48px;
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.heroHeader {
+  margin-bottom: 48px;
+  border-left: 4px solid var(--accent-red);
+  padding-left: 28px;
+}
+
+.heroTitle {
+  font-size: 44px;
+  font-weight: 900;
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+  color: var(--text-primary);
+  margin-bottom: 16px;
+}
+
+.heroSubtitle {
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  max-width: 800px;
+}
+
+.cardsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+  margin-top: 36px;
+}
+
+@media (max-width: 1100px) {
+  .cardsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .cardsGrid {
+    grid-template-columns: 1fr;
+    padding: 24px;
+  }
+  .topBar {
+    padding: 16px 24px;
+  }
+  .heroSection {
+    padding: 36px 24px;
+  }
+  .heroTitle {
+    font-size: 28px;
+  }
+}
+
+/* Card Styling */
+.roleCard {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-dark);
+  padding: 32px 28px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 380px;
+  position: relative;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease, border-color 0.2s ease;
+  cursor: pointer;
+  text-align: left;
+}
+
+.roleCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
+  border-color: var(--accent-red);
+}
+
+.roleCardHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.initialSquare {
+  width: 52px;
+  height: 52px;
+  background-color: var(--accent-red);
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  box-shadow: 3px 3px 0px #111111;
+}
+
+.permBadge {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 4px 8px;
+  background: var(--bg-main);
+  border: 1px solid var(--border-light);
+  color: var(--text-primary);
+}
+
+.roleCardBody {
+  flex: 1;
+}
+
+.roleName {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin-bottom: 4px;
+  color: var(--text-primary);
+}
+
+.personName {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.roleDesc {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+.roleCardFooter {
+  margin-top: 32px;
+  padding-top: 20px;
+  border-top: 1px dashed var(--border-light);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.actionLink {
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: color 0.2s, gap 0.2s;
+}
+
+.roleCard:hover .actionLink {
+  color: var(--accent-red);
+  gap: 12px;
+}
+
+.arrowIcon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.footerInfo {
+  padding: 32px 48px;
+  margin-top: auto;
+  border-top: 1px solid var(--border-light);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: var(--text-muted);
+}

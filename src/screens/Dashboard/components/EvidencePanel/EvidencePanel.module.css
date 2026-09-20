@@ -1,0 +1,456 @@
+.evidenceContainer {
+  margin-top: 36px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-dark);
+}
+
+.panelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 28px;
+  border-bottom: 1px solid var(--border-dark);
+  background: var(--bg-main);
+}
+
+.panelTitleGroup {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.panelTitle {
+  font-size: 14px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-primary);
+}
+
+.rolePerspectiveBadge {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  background: var(--accent-red);
+  color: #FFFFFF;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.mockWatermark {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.panelContent {
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 36px;
+}
+
+.subSection {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border-light);
+  padding-bottom: 8px;
+}
+
+.sectionTitle {
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sectionTitle::before {
+  content: "";
+  display: inline-block;
+  width: 4px;
+  height: 14px;
+  background: var(--accent-red);
+}
+
+/* Developer: Tracing Timeline */
+.timelineLegend {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legendBox {
+  width: 12px;
+  height: 12px;
+  border: 1px solid #111111;
+}
+
+.legendBox.normal {
+  background: #111111;
+}
+
+.legendBox.bottleneck {
+  background: var(--accent-red);
+}
+
+.legendBox.antipattern {
+  background: #FF1E10;
+  border-color: #B91C1C;
+}
+
+.spansContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: #FAFAFA;
+  padding: 20px;
+  border: 1px solid var(--border-light);
+}
+
+.spanRow {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 14px;
+  background: #FFFFFF;
+  border: 1px solid var(--border-light);
+  transition: all 0.15s ease;
+}
+
+.spanRow:hover {
+  border-color: var(--border-dark);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.spanRow.bottleneck {
+  border-left: 4px solid var(--accent-red);
+  background: #FFFDFD;
+}
+
+.spanRow.antipattern {
+  border-left: 4px solid #FF1E10;
+  background: #FFF5F5;
+}
+
+.spanMeta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.spanLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.spanServiceBadge {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 6px;
+  background: var(--bg-main);
+  border: 1px solid var(--border-light);
+  color: var(--text-primary);
+}
+
+.spanOperation {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.spanDuration {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.bottleneck .spanDuration,
+.antipattern .spanDuration {
+  color: var(--accent-red);
+}
+
+.spanBarTrack {
+  height: 8px;
+  width: 100%;
+  background: #EAEAE6;
+  position: relative;
+  overflow: hidden;
+}
+
+.spanBarFill {
+  height: 100%;
+  position: absolute;
+  transition: width 0.3s ease;
+}
+
+.spanBarFill.normal {
+  background: #111111;
+}
+
+.spanBarFill.bottleneck {
+  background: var(--accent-red);
+}
+
+.spanBarFill.antipattern {
+  background: #FF1E10;
+}
+
+.spanDetails {
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+}
+
+.antipattern .spanDetails {
+  color: #B91C1C;
+  font-weight: 600;
+}
+
+/* Modernist Data Tables */
+.tableWrapper {
+  overflow-x: auto;
+  border: 1px solid var(--border-dark);
+}
+
+.modernTable {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 13px;
+  background: var(--bg-surface);
+}
+
+.modernTable th {
+  background: #111111;
+  color: #FFFFFF;
+  padding: 12px 16px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  border-bottom: 2px solid var(--accent-red);
+}
+
+.modernTable td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-light);
+  color: var(--text-primary);
+}
+
+.modernTable tr:last-child td {
+  border-bottom: none;
+}
+
+.modernTable tr:hover td {
+  background: #FAFAFA;
+}
+
+.querySnippet {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: #111111;
+  max-width: 450px;
+  word-break: break-word;
+}
+
+.tagGroup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.badgeTag {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border: 1px solid var(--border-light);
+  background: var(--bg-main);
+}
+
+.badgeTag.alert {
+  background: #FEE2E2;
+  border-color: #EF4444;
+  color: #991B1B;
+}
+
+.badgeTag.success {
+  background: #E0F2FE;
+  border-color: #0284C7;
+  color: #0369A1;
+}
+
+/* Operator Error Budget */
+.errorBudgetCard {
+  border: 1px solid var(--border-dark);
+  padding: 24px;
+  background: var(--bg-main);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.budgetMetaRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.budgetStat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.budgetLabel {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+}
+
+.budgetValue {
+  font-size: 24px;
+  font-weight: 900;
+  color: var(--text-primary);
+}
+
+.progressContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.progressBarTrack {
+  width: 100%;
+  height: 18px;
+  background: #FFFFFF;
+  border: 1px solid var(--border-dark);
+  position: relative;
+  overflow: hidden;
+}
+
+.progressBarFill {
+  height: 100%;
+  background: var(--accent-red);
+  transition: width 0.4s ease;
+}
+
+.progressMarkers {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+/* Incidents list */
+.incidentsList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.incidentCard {
+  padding: 14px 18px;
+  background: #FFFFFF;
+  border: 1px solid var(--border-light);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.incidentCard.p1, .incidentCard.p2 {
+  border-left: 4px solid var(--accent-red);
+}
+
+.sevBadge {
+  font-family: var(--font-mono);
+  font-weight: 800;
+  font-size: 11px;
+  padding: 3px 8px;
+  border: 1px solid var(--border-dark);
+}
+
+.sevBadge.p1, .sevBadge.p2 {
+  background: var(--accent-red);
+  color: #FFFFFF;
+  border-color: var(--accent-red);
+}
+
+/* Tester Test Gaps */
+.gapsGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+
+.gapCard {
+  border: 1px solid var(--accent-red);
+  background: #FFFDFD;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.gapHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.gapIdBadge {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--accent-red);
+}
+
+.gapDesc {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.gapActionBox {
+  background: #FFFFFF;
+  border: 1px dashed var(--border-light);
+  padding: 10px 14px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.actionHeading {
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-right: 6px;
+}

@@ -1,0 +1,80 @@
+.criteriaCard {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-light);
+  padding: 20px 22px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 140px;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.criteriaCard:hover {
+  border-color: var(--border-dark);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+}
+
+.criteriaCard.failed {
+  border-color: var(--accent-red);
+  background: #FFFDFD;
+}
+
+.cardHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  gap: 12px;
+}
+
+.questionNumber {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.statusIndicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border: 1px solid var(--border-dark);
+  background: var(--bg-main);
+}
+
+.statusIndicator.passed {
+  background: #111111;
+  color: #FFFFFF;
+  border-color: #111111;
+}
+
+.statusIndicator.failed {
+  background: var(--accent-red);
+  color: #FFFFFF;
+  border-color: var(--accent-red);
+}
+
+.questionText {
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.35;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.descText {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+.failed .descText {
+  color: #991B1B;
+  font-weight: 500;
+}
