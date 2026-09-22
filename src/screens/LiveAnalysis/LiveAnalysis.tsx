@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import {
   fetchFlowAnalysis,
   fetchAnalysisList,
+  fetchDbQuality,
   type FlowAnalysisDetail,
   type AnalysisListItem,
+  type DbQualityResponse,
   BASE_URL,
 } from '../../services/api';
 import styles from './LiveAnalysis.module.css';
@@ -25,36 +28,64 @@ export const LiveAnalysis: React.FC<LiveAnalysisProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
 
-  // Mount & khi đổi flow: Tự động gọi fetchFlowAnalysis
+  // Database Quality state
+  const [dbQuality, setDbQuality] = useState<DbQualityResponse | null>(null);
+  const [dbQualityLoading, setDbQualityLoading] = useState<boolean>(false);
+  const [dbQualityError, setDbQualityError] = useState<string | null>(null);
+
+  // Mount & khi đổi flow: Tự động gọi fetchFlowAnalysis trước, sau đó dùng trace_id để lấy DB quality
   useEffect(() => {
     let isMounted = true;
 
-    Promise.all([
-      fetchFlowAnalysis(selectedFlowId)
-        .then((data) => {
-          if (isMounted) {
-            setFlowAnalysis(data);
-            setError(null);
-          }
-        })
-        .catch((err: any) => {
-          if (isMounted) {
-            setError(err?.message || 'Đã xảy ra lỗi khi tải dữ liệu từ backend API.');
-            setFlowAnalysis(null);
-          }
-        }),
-      fetchAnalysisList()
-        .then((list) => {
-          if (isMounted) setAvailableFlows(list);
-        })
-        .catch(() => {
-          // Bỏ qua nếu danh sách flow phụ gặp lỗi
-        }),
-    ]).finally(() => {
-      if (isMounted) {
+    // Reset DB quality state on flow change
+    setDbQualityLoading(true);
+    setDbQualityError(null);
+
+    fetchAnalysisList()
+      .then((list) => {
+        if (isMounted) setAvailableFlows(list);
+      })
+      .catch(() => {
+        // Bỏ qua nếu danh sách flow phụ gặp lỗi
+      });
+
+    fetchFlowAnalysis(selectedFlowId)
+      .then(async (data) => {
+        if (!isMounted) return;
+        setFlowAnalysis(data);
+        setError(null);
         setIsLoading(false);
-      }
-    });
+
+        // Sau khi có kết quả analysis, lấy analysis.trace_id
+        const traceId = data?.trace_id?.trim();
+        try {
+          const dbData = traceId
+            ? await fetchDbQuality(selectedFlowId, traceId)
+            : await fetchDbQuality(selectedFlowId);
+          if (isMounted) {
+            setDbQuality(dbData);
+            setDbQualityError(null);
+          }
+        } catch (err: any) {
+          if (isMounted) {
+            setDbQualityError(err?.message || 'Không thể tải dữ liệu DB Quality.');
+            setDbQuality(null);
+          }
+        } finally {
+          if (isMounted) {
+            setDbQualityLoading(false);
+          }
+        }
+      })
+      .catch((err: any) => {
+        if (isMounted) {
+          setError(err?.message || 'Đã xảy ra lỗi khi tải dữ liệu từ backend API.');
+          setFlowAnalysis(null);
+          setDbQuality(null);
+          setDbQualityLoading(false);
+          setIsLoading(false);
+        }
+      });
 
     return () => {
       isMounted = false;
@@ -70,27 +101,41 @@ export const LiveAnalysis: React.FC<LiveAnalysisProps> = ({
   };
 
   // Handler refresh thủ công
-  const handleRefresh = () => {
+  const handleRefresh = async () => {
     setIsRefreshing(true);
     setError(null);
+    setDbQualityLoading(true);
+    setDbQualityError(null);
 
-    Promise.all([
-      fetchFlowAnalysis(selectedFlowId)
-        .then((data) => {
-          setFlowAnalysis(data);
-        })
-        .catch((err: any) => {
-          setError(err?.message || 'Đã xảy ra lỗi khi tải dữ liệu từ backend API.');
-          setFlowAnalysis(null);
-        }),
-      fetchAnalysisList()
-        .then((list) => {
-          setAvailableFlows(list);
-        })
-        .catch(() => {}),
-    ]).finally(() => {
+    fetchAnalysisList()
+      .then((list) => {
+        setAvailableFlows(list);
+      })
+      .catch(() => {});
+
+    try {
+      const data = await fetchFlowAnalysis(selectedFlowId);
+      setFlowAnalysis(data);
+
+      const traceId = data?.trace_id?.trim();
+      try {
+        const dbData = traceId
+          ? await fetchDbQuality(selectedFlowId, traceId)
+          : await fetchDbQuality(selectedFlowId);
+        setDbQuality(dbData);
+        setDbQualityError(null);
+      } catch (err: any) {
+        setDbQualityError(err?.message || 'Không thể tải dữ liệu DB Quality.');
+        setDbQuality(null);
+      }
+    } catch (err: any) {
+      setError(err?.message || 'Đã xảy ra lỗi khi tải dữ liệu từ backend API.');
+      setFlowAnalysis(null);
+      setDbQuality(null);
+    } finally {
       setIsRefreshing(false);
-    });
+      setDbQualityLoading(false);
+    }
   };
 
   // Tách runtime_flow theo từng dòng và phân tích dòng lỗi
@@ -106,6 +151,12 @@ export const LiveAnalysis: React.FC<LiveAnalysisProps> = ({
   const errorStepsCount = React.useMemo(() => {
     return runtimeLines.filter((line) => line.includes('[LỖI]')).length;
   }, [runtimeLines]);
+
+  // Helper cắt ngắn statement SQL
+  const truncateSql = (sql: string, maxLen = 80) => {
+    if (sql.length <= maxLen) return sql;
+    return sql.slice(0, maxLen) + '…';
+  };
 
   // Helper format ngày giờ
   const formatTime = (timeStr?: string) => {
@@ -319,8 +370,107 @@ export const LiveAnalysis: React.FC<LiveAnalysisProps> = ({
 
             <div className={styles.panelBody}>
               <div className={styles.markdownContent}>
-                <ReactMarkdown>{flowAnalysis.detail}</ReactMarkdown>
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>{flowAnalysis.detail}</ReactMarkdown>
               </div>
+            </div>
+          </section>
+
+          {/* Panel 3: Database Quality */}
+          <section className={styles.dbQualityPanel}>
+            <div className={styles.panelHeader}>
+              <div className={styles.panelTitle}>Database Quality</div>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                {dbQuality && (
+                  <span
+                    className={`${styles.panelBadge} ${
+                      dbQuality.alert_count > 0 ? styles.panelBadgeError : ''
+                    }`}
+                  >
+                    {dbQuality.total_queries} query · {dbQuality.alert_count} cảnh báo
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div className={styles.panelBody}>
+              {dbQualityLoading ? (
+                <div className={styles.dbQualityState}>
+                  <div className={styles.loadingSpinner} />
+                  <div className={styles.loadingText}>Đang tải DB Quality…</div>
+                </div>
+              ) : dbQualityError ? (
+                <div className={styles.dbQualityState}>
+                  <div className={styles.dbQualityErrorMsg}>
+                    <span>⚠</span> {dbQualityError}
+                  </div>
+                </div>
+              ) : dbQuality && dbQuality.total_queries === 0 ? (
+                <div className={styles.dbQualityState}>
+                  <div className={styles.dbQualityEmptyMsg}>
+                    Không có query database trong giao dịch này.
+                  </div>
+                </div>
+              ) : dbQuality ? (
+                <div className={styles.dbQualityTableWrap}>
+                  <table className={styles.dbQualityTable}>
+                    <thead>
+                      <tr>
+                        <th className={styles.dbThQuery}>QUERY</th>
+                        <th className={styles.dbThNarrow}>BẢNG</th>
+                        <th className={styles.dbThNarrow}>GỌI</th>
+                        <th className={styles.dbThNarrow}>TỔNG MS</th>
+                        <th className={styles.dbThFlags}>CỜ</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {dbQuality.db_quality.map((item, idx) => (
+                        <tr
+                          key={idx}
+                          className={
+                            item.status === 'alert'
+                              ? styles.dbRowAlert
+                              : styles.dbRowOk
+                          }
+                        >
+                          <td
+                            className={styles.dbCellQuery}
+                            title={item.statement}
+                          >
+                            {truncateSql(item.statement)}
+                          </td>
+                          <td className={styles.dbCellNarrow}>{item.table}</td>
+                          <td
+                            className={`${styles.dbCellNarrow} ${
+                              item.call_count >= 3 ? styles.dbCallCountAlert : ''
+                            }`}
+                          >
+                            {item.call_count}x
+                          </td>
+                          <td className={styles.dbCellNarrow}>
+                            {typeof item.total_ms === 'number'
+                              ? item.total_ms.toFixed(1)
+                              : item.total_ms}
+                          </td>
+                          <td className={styles.dbCellFlags}>
+                            {(item.flags || []).map((flag, fi) => (
+                              <span
+                                key={fi}
+                                className={
+                                  flag.toUpperCase() === 'OK'
+                                    ? styles.flagOk
+                                    : styles.flagAlert
+                                }
+                              >
+                                {flag}
+                              </span>
+                            ))}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : null}
             </div>
           </section>
         </div>

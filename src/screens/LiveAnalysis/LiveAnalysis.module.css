@@ -603,6 +603,266 @@
   border-color: var(--accent-red);
 }
 
+/* ─── Database Quality Panel ─── */
+
+.dbQualityPanel {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-surface);
+  min-height: 0;
+  overflow: hidden;
+  grid-column: 1 / -1;
+  border-top: 1px solid var(--border-dark);
+}
+
+.dbQualityState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 120px;
+  text-align: center;
+  gap: 10px;
+}
+
+.dbQualityErrorMsg {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent-red);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dbQualityEmptyMsg {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.dbQualityTableWrap {
+  overflow-x: auto;
+}
+
+.dbQualityTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.dbQualityTable thead {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.dbQualityTable th {
+  text-align: left;
+  padding: 10px 12px;
+  background: #111111;
+  color: #FFFFFF;
+  font-weight: 800;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  border-bottom: 2px solid var(--accent-red);
+  white-space: nowrap;
+}
+
+.dbThQuery {
+  min-width: 320px;
+}
+
+.dbThNarrow {
+  min-width: 80px;
+}
+
+.dbThFlags {
+  min-width: 160px;
+}
+
+.dbQualityTable td {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border-light);
+  vertical-align: top;
+}
+
+.dbCellQuery {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-primary);
+  max-width: 480px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: default;
+}
+
+.dbCellNarrow {
+  font-weight: 700;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.dbCallCountAlert {
+  color: var(--accent-red) !important;
+  font-weight: 900 !important;
+}
+
+.dbCellFlags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+/* Row states */
+.dbRowOk {
+  background: #FAFAFA;
+  transition: background-color 0.15s ease;
+}
+
+.dbRowOk:hover {
+  background: #F4F4F2;
+}
+
+.dbRowAlert {
+  background: #FEF2F2 !important;
+  border-left: 3px solid var(--accent-red);
+  transition: background-color 0.15s ease;
+}
+
+.dbRowAlert:hover {
+  background: #FEE2E2 !important;
+}
+
+.dbRowAlert .dbCellQuery {
+  color: #991B1B;
+  font-weight: 800;
+}
+
+.dbRowAlert .dbCellNarrow {
+  color: #B91C1C;
+}
+
+/* Flag badges */
+.flagOk {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 6px;
+  background: #ECFDF5;
+  color: #059669;
+  border: 1px solid #A7F3D0;
+  letter-spacing: 0.03em;
+}
+
+.flagAlert {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 900;
+  padding: 2px 6px;
+  background: #FEF2F2;
+  color: var(--accent-red);
+  border: 1px solid #FECACA;
+  letter-spacing: 0.03em;
+}
+
+/* Markdown Content & Table Styling */
+.markdownContent {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-primary);
+  overflow-x: auto;
+  width: 100%;
+}
+
+.markdownContent table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 16px 0;
+  font-size: 13px;
+  text-align: left;
+  border: 1px solid var(--border-light);
+  min-width: 480px;
+}
+
+.markdownContent th,
+.markdownContent td {
+  padding: 10px 14px;
+  border: 1px solid var(--border-light);
+  vertical-align: top;
+  line-height: 1.5;
+}
+
+.markdownContent th {
+  background-color: #F4F4F2;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  border-bottom: 2px solid var(--border-light);
+}
+
+.markdownContent tr:nth-child(even) td {
+  background-color: #FAFAFA;
+}
+
+.markdownContent tr:hover td {
+  background-color: #F0F0EE;
+}
+
+.markdownContent p {
+  margin: 0 0 12px 0;
+}
+
+.markdownContent p:last-child {
+  margin-bottom: 0;
+}
+
+.markdownContent ul,
+.markdownContent ol {
+  margin: 8px 0 12px 20px;
+  padding: 0;
+}
+
+.markdownContent li {
+  margin-bottom: 4px;
+}
+
+.markdownContent h1,
+.markdownContent h2,
+.markdownContent h3,
+.markdownContent h4 {
+  margin-top: 18px;
+  margin-bottom: 8px;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.markdownContent code {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  background: var(--bg-subtle);
+  padding: 2px 6px;
+  border-radius: 2px;
+}
+
+.markdownContent pre {
+  background: var(--bg-dark);
+  color: #FFFFFF;
+  padding: 14px;
+  border-radius: 4px;
+  overflow-x: auto;
+  margin: 12px 0;
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
 /* Responsive */
 @media (max-width: 1024px) {
   .contentGrid {
@@ -611,6 +871,9 @@
   }
   .panel {
     min-height: 420px;
+  }
+  .dbQualityPanel {
+    grid-column: 1;
   }
 }
 
@@ -625,5 +888,8 @@
     padding: 12px 16px;
     flex-direction: column;
     align-items: flex-start;
+  }
+  .dbThQuery {
+    min-width: 200px;
   }
 }
