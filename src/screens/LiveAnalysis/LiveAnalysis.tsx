@@ -1,21 +1,30 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import {
   fetchFlowAnalysis,
   fetchAnalysisList,
+  fetchFlowEvidence,
+  fetchTraceTimeline,
   fetchDbQuality,
   type FlowAnalysisDetail,
   type AnalysisListItem,
+  type EvidenceReport,
+  type TraceTimelineData,
   type DbQualityResponse,
   BASE_URL,
 } from '../../services/api';
+import { EvidenceMapping } from './components/EvidenceMapping';
+import { TraceTimeline } from './components/TraceTimeline';
+import { DbQualityPanel } from './components/DbQualityPanel';
 import styles from './LiveAnalysis.module.css';
 
 interface LiveAnalysisProps {
   initialFlowId?: string;
   onBackToMock?: () => void;
 }
+
+type TabId = 'overview' | 'evidence' | 'trace' | 'db';
 
 export const LiveAnalysis: React.FC<LiveAnalysisProps> = ({
   initialFlowId = 'F1',
@@ -28,115 +37,148 @@ export const LiveAnalysis: React.FC<LiveAnalysisProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
 
-  // Database Quality state
-  const [dbQuality, setDbQuality] = useState<DbQualityResponse | null>(null);
-  const [dbQualityLoading, setDbQualityLoading] = useState<boolean>(false);
-  const [dbQualityError, setDbQualityError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<TabId>('overview');
 
-  // Mount & khi đổi flow: Tự động gọi fetchFlowAnalysis trước, sau đó dùng trace_id để lấy DB quality
+  // Bảng đối chiếu: mặc định lấy bản đã lưu cùng verdict, có thể dựng lại tại chỗ
+  const [liveEvidence, setLiveEvidence] = useState<EvidenceReport | null>(null);
+  const [evidenceError, setEvidenceError] = useState<string | null>(null);
+  const [isEvidenceLoading, setIsEvidenceLoading] = useState(false);
+
+  // Sơ đồ trace + số liệu DB: đọc tại thời điểm người dùng mở tab
+  const [timeline, setTimeline] = useState<TraceTimelineData | null>(null);
+  const [timelineError, setTimelineError] = useState<string | null>(null);
+  const [isTimelineLoading, setIsTimelineLoading] = useState(false);
+
+  const [dbQuality, setDbQuality] = useState<DbQualityResponse | null>(null);
+  const [dbError, setDbError] = useState<string | null>(null);
+  const [isDbLoading, setIsDbLoading] = useState(false);
+  const [dbFetchedAt, setDbFetchedAt] = useState<Date | null>(null);
+
+  const traceId = flowAnalysis?.trace_id || liveEvidence?.trace_id || '';
+  const evidence = liveEvidence || flowAnalysis?.evidence || null;
+
+  const loadAnalysis = useCallback(
+    (flowId: string) => {
+      return Promise.all([
+        fetchFlowAnalysis(flowId)
+          .then((data) => {
+            setFlowAnalysis(data);
+            setError(null);
+          })
+          .catch((err: unknown) => {
+            setError(
+              (err as Error)?.message || 'Đã xảy ra lỗi khi tải dữ liệu từ backend API.'
+            );
+            setFlowAnalysis(null);
+          }),
+        fetchAnalysisList()
+          .then(setAvailableFlows)
+          .catch(() => {
+            // Bỏ qua nếu danh sách flow phụ gặp lỗi
+          }),
+      ]);
+    },
+    []
+  );
+
+  // Mount & khi đổi flow: tải lại toàn bộ, xoá dữ liệu tab phụ của flow cũ
   useEffect(() => {
     let isMounted = true;
+    setLiveEvidence(null);
+    setEvidenceError(null);
+    setTimeline(null);
+    setTimelineError(null);
+    setDbQuality(null);
+    setDbError(null);
 
-    // Reset DB quality state on flow change
-    setDbQualityLoading(true);
-    setDbQualityError(null);
-
-    fetchAnalysisList()
-      .then((list) => {
-        if (isMounted) setAvailableFlows(list);
-      })
-      .catch(() => {
-        // Bỏ qua nếu danh sách flow phụ gặp lỗi
-      });
-
-    fetchFlowAnalysis(selectedFlowId)
-      .then(async (data) => {
-        if (!isMounted) return;
-        setFlowAnalysis(data);
-        setError(null);
-        setIsLoading(false);
-
-        // Sau khi có kết quả analysis, lấy analysis.trace_id
-        const traceId = data?.trace_id?.trim();
-        try {
-          const dbData = traceId
-            ? await fetchDbQuality(selectedFlowId, traceId)
-            : await fetchDbQuality(selectedFlowId);
-          if (isMounted) {
-            setDbQuality(dbData);
-            setDbQualityError(null);
-          }
-        } catch (err: any) {
-          if (isMounted) {
-            setDbQualityError(err?.message || 'Không thể tải dữ liệu DB Quality.');
-            setDbQuality(null);
-          }
-        } finally {
-          if (isMounted) {
-            setDbQualityLoading(false);
-          }
-        }
-      })
-      .catch((err: any) => {
-        if (isMounted) {
-          setError(err?.message || 'Đã xảy ra lỗi khi tải dữ liệu từ backend API.');
-          setFlowAnalysis(null);
-          setDbQuality(null);
-          setDbQualityLoading(false);
-          setIsLoading(false);
-        }
-      });
+    loadAnalysis(selectedFlowId).finally(() => {
+      if (isMounted) setIsLoading(false);
+    });
 
     return () => {
       isMounted = false;
     };
-  }, [selectedFlowId]);
+  }, [selectedFlowId, loadAnalysis]);
 
-  // Handler đổi flow
+  // Bản ghi mới trỏ sang trace khác -> bỏ sơ đồ và số liệu DB của trace cũ
+  useEffect(() => {
+    setTimeline(null);
+    setTimelineError(null);
+    setDbQuality(null);
+    setDbError(null);
+  }, [traceId]);
+
   const handleFlowChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const newFlowId = e.target.value;
     setIsLoading(true);
     setError(null);
-    setSelectedFlowId(newFlowId);
+    setSelectedFlowId(e.target.value);
   };
 
-  // Handler refresh thủ công
-  const handleRefresh = async () => {
+  const handleRefresh = () => {
     setIsRefreshing(true);
     setError(null);
-    setDbQualityLoading(true);
-    setDbQualityError(null);
-
-    fetchAnalysisList()
-      .then((list) => {
-        setAvailableFlows(list);
-      })
-      .catch(() => {});
-
-    try {
-      const data = await fetchFlowAnalysis(selectedFlowId);
-      setFlowAnalysis(data);
-
-      const traceId = data?.trace_id?.trim();
-      try {
-        const dbData = traceId
-          ? await fetchDbQuality(selectedFlowId, traceId)
-          : await fetchDbQuality(selectedFlowId);
-        setDbQuality(dbData);
-        setDbQualityError(null);
-      } catch (err: any) {
-        setDbQualityError(err?.message || 'Không thể tải dữ liệu DB Quality.');
-        setDbQuality(null);
-      }
-    } catch (err: any) {
-      setError(err?.message || 'Đã xảy ra lỗi khi tải dữ liệu từ backend API.');
-      setFlowAnalysis(null);
-      setDbQuality(null);
-    } finally {
-      setIsRefreshing(false);
-      setDbQualityLoading(false);
-    }
+    loadAnalysis(selectedFlowId).finally(() => setIsRefreshing(false));
   };
+
+  // --- Tab: đối chiếu lại tài liệu ngay tại thời điểm xem ---
+  const reloadEvidence = useCallback(() => {
+    setIsEvidenceLoading(true);
+    setEvidenceError(null);
+    fetchFlowEvidence(selectedFlowId, traceId || undefined)
+      .then(setLiveEvidence)
+      .catch((err: unknown) =>
+        setEvidenceError((err as Error)?.message || 'Không dựng được bảng đối chiếu.')
+      )
+      .finally(() => setIsEvidenceLoading(false));
+  }, [selectedFlowId, traceId]);
+
+  // --- Tab: sơ đồ trace ---
+  const loadTimeline = useCallback(() => {
+    if (!traceId) {
+      setTimelineError(
+        'Kết quả phân tích này chưa gắn trace_id. Chạy lại POST /runtime để bản ghi mới lưu kèm trace.'
+      );
+      return;
+    }
+    setIsTimelineLoading(true);
+    setTimelineError(null);
+    fetchTraceTimeline(traceId)
+      .then(setTimeline)
+      .catch((err: unknown) =>
+        setTimelineError((err as Error)?.message || 'Không tải được sơ đồ trace.')
+      )
+      .finally(() => setIsTimelineLoading(false));
+  }, [traceId]);
+
+  useEffect(() => {
+    if (activeTab === 'trace' && !timeline && !isTimelineLoading && !timelineError) {
+      loadTimeline();
+    }
+  }, [activeTab, timeline, isTimelineLoading, timelineError, loadTimeline]);
+
+  // --- Tab: chất lượng DB (đọc tại thời điểm xem, không lưu) ---
+  const loadDbQuality = useCallback(() => {
+    setIsDbLoading(true);
+    setDbError(null);
+    const services = (timeline?.services || [])
+      .filter((s) => s.db_calls > 0)
+      .map((s) => s.name);
+    fetchDbQuality(services)
+      .then((data) => {
+        setDbQuality(data);
+        setDbFetchedAt(new Date());
+      })
+      .catch((err: unknown) =>
+        setDbError((err as Error)?.message || 'Không đọc được số liệu database.')
+      )
+      .finally(() => setIsDbLoading(false));
+  }, [timeline]);
+
+  useEffect(() => {
+    if (activeTab === 'db' && !dbQuality && !isDbLoading && !dbError) {
+      loadDbQuality();
+    }
+  }, [activeTab, dbQuality, isDbLoading, dbError, loadDbQuality]);
 
   // Tách runtime_flow theo từng dòng và phân tích dòng lỗi
   const runtimeFlow = flowAnalysis?.runtime_flow;
@@ -148,17 +190,11 @@ export const LiveAnalysis: React.FC<LiveAnalysisProps> = ({
       .filter((line) => line.length > 0);
   }, [runtimeFlow]);
 
-  const errorStepsCount = React.useMemo(() => {
-    return runtimeLines.filter((line) => line.includes('[LỖI]')).length;
-  }, [runtimeLines]);
+  const errorStepsCount = React.useMemo(
+    () => runtimeLines.filter((line) => line.includes('[LỖI]')).length,
+    [runtimeLines]
+  );
 
-  // Helper cắt ngắn statement SQL
-  const truncateSql = (sql: string, maxLen = 80) => {
-    if (sql.length <= maxLen) return sql;
-    return sql.slice(0, maxLen) + '…';
-  };
-
-  // Helper format ngày giờ
   const formatTime = (timeStr?: string) => {
     if (!timeStr) return '--:--';
     try {
@@ -178,7 +214,6 @@ export const LiveAnalysis: React.FC<LiveAnalysisProps> = ({
     }
   };
 
-  // Lấy class tương ứng cho verdict badge
   const getVerdictBadgeClass = (verdict?: string) => {
     const v = (verdict || '').toUpperCase();
     if (v === 'PASS') return styles.verdictPass;
@@ -186,6 +221,23 @@ export const LiveAnalysis: React.FC<LiveAnalysisProps> = ({
     if (v === 'FAIL') return styles.verdictFail;
     return styles.verdictDefault;
   };
+
+  const summary = evidence?.summary;
+  const tabs: { id: TabId; label: string; badge?: string; danger?: boolean }[] = [
+    { id: 'overview', label: 'Tổng quan' },
+    {
+      id: 'evidence',
+      label: 'Đối chiếu tài liệu',
+      badge: summary ? `${summary.matched}/${summary.total_steps}` : undefined,
+      danger: !!summary && (summary.missing > 0 || summary.nfr_fail > 0),
+    },
+    {
+      id: 'trace',
+      label: 'Sơ đồ trace',
+      badge: timeline ? `${timeline.step_count} bước` : undefined,
+    },
+    { id: 'db', label: 'Chất lượng DB' },
+  ];
 
   return (
     <div className={styles.liveContainer}>
@@ -206,7 +258,6 @@ export const LiveAnalysis: React.FC<LiveAnalysisProps> = ({
         </div>
 
         <div className={styles.headerActions}>
-          {/* Bộ chọn Flow nếu có nhiều flow */}
           <div className={styles.flowSelectGroup}>
             <label htmlFor="flow-select" className={styles.flowSelectLabel}>
               Flow:
@@ -258,12 +309,10 @@ export const LiveAnalysis: React.FC<LiveAnalysisProps> = ({
       <div className={styles.subHeader}>
         <div className={styles.metaLeft}>
           <span className={styles.flowTag}>FLOW: {flowAnalysis?.flow_id || selectedFlowId}</span>
-          
+
           {flowAnalysis && (
             <span
-              className={`${styles.verdictBadge} ${getVerdictBadgeClass(
-                flowAnalysis.verdict
-              )}`}
+              className={`${styles.verdictBadge} ${getVerdictBadgeClass(flowAnalysis.verdict)}`}
             >
               {flowAnalysis.verdict === 'PASS' && '✓ '}
               {flowAnalysis.verdict === 'WARN' && '⚠ '}
@@ -273,8 +322,12 @@ export const LiveAnalysis: React.FC<LiveAnalysisProps> = ({
           )}
 
           {flowAnalysis?.analysis_type && (
-            <span className={styles.typeBadge}>
-              Loại: {flowAnalysis.analysis_type}
+            <span className={styles.typeBadge}>Loại: {flowAnalysis.analysis_type}</span>
+          )}
+
+          {traceId && (
+            <span className={styles.typeBadge} title={traceId}>
+              Trace: {traceId.slice(0, 16)}…
             </span>
           )}
         </div>
@@ -286,6 +339,29 @@ export const LiveAnalysis: React.FC<LiveAnalysisProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Thanh tab của báo cáo chi tiết */}
+      {!isLoading && !error && flowAnalysis && (
+        <div className={styles.tabBar} role="tablist">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              role="tab"
+              aria-selected={activeTab === tab.id}
+              className={`${styles.tabBtn} ${activeTab === tab.id ? styles.tabActive : ''}`}
+              onClick={() => setActiveTab(tab.id)}
+            >
+              <span>{tab.label}</span>
+              {tab.badge && (
+                <span className={`${styles.tabBadge} ${tab.danger ? styles.tabBadgeDanger : ''}`}>
+                  {tab.badge}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Main Content View */}
       {isLoading ? (
@@ -304,176 +380,120 @@ export const LiveAnalysis: React.FC<LiveAnalysisProps> = ({
             </div>
             <div className={styles.errorMessage}>{error}</div>
             <div className={styles.errorHelp}>
-              Vui lòng đảm bảo dịch vụ backend đang hoạt động tại <code>{BASE_URL}</code> và đã hỗ trợ CORS cho cổng dashboard.
+              Vui lòng đảm bảo dịch vụ backend đang hoạt động tại <code>{BASE_URL}</code> và đã hỗ
+              trợ CORS cho cổng dashboard.
             </div>
-            <button
-              type="button"
-              className={styles.retryBtn}
-              onClick={handleRefresh}
-            >
+            <button type="button" className={styles.retryBtn} onClick={handleRefresh}>
               Thử lại ngay
             </button>
           </div>
         </div>
       ) : flowAnalysis ? (
-        <div className={styles.contentGrid}>
-          {/* Panel 1: Luồng thực thi runtime */}
-          <section className={styles.panel}>
-            <div className={styles.panelHeader}>
-              <div className={styles.panelTitle}>Luồng thực thi runtime</div>
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <span className={styles.panelBadge}>
-                  {runtimeLines.length} bước gọi
-                </span>
-                {errorStepsCount > 0 && (
-                  <span className={`${styles.panelBadge} ${styles.panelBadgeError}`}>
-                    {errorStepsCount} bước lỗi [LỖI]
-                  </span>
-                )}
-              </div>
-            </div>
-
-            <div className={styles.panelBody}>
-              <div className={styles.flowStreamList}>
-                {runtimeLines.map((line, index) => {
-                  const hasError = line.includes('[LỖI]');
-
-                  return (
-                    <div
-                      key={index}
-                      className={`${styles.flowStepRow} ${
-                        hasError ? styles.flowStepRowError : ''
-                      }`}
-                    >
-                      <span className={styles.stepIndex}>
-                        {String(index + 1).padStart(2, '0')}
+        <>
+          {activeTab === 'overview' && (
+            <div className={styles.contentGrid}>
+              {/* Panel 1: Luồng thực thi runtime */}
+              <section className={styles.panel}>
+                <div className={styles.panelHeader}>
+                  <div className={styles.panelTitle}>Luồng thực thi runtime</div>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <span className={styles.panelBadge}>{runtimeLines.length} bước gọi</span>
+                    {errorStepsCount > 0 && (
+                      <span className={`${styles.panelBadge} ${styles.panelBadgeError}`}>
+                        {errorStepsCount} bước lỗi [LỖI]
                       </span>
-                      <span className={styles.stepContent}>
-                        {line}
-                        {hasError && (
-                          <span className={styles.errorTag}>CẢNH BÁO LỖI</span>
-                        )}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </section>
-
-          {/* Panel 2: Kết luận phân tích (Markdown) */}
-          <section className={styles.panel}>
-            <div className={styles.panelHeader}>
-              <div className={styles.panelTitle}>Kết luận phân tích</div>
-              <span className={styles.panelBadge}>AI Agent Audit</span>
-            </div>
-
-            <div className={styles.panelBody}>
-              <div className={styles.markdownContent}>
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>{flowAnalysis.detail}</ReactMarkdown>
-              </div>
-            </div>
-          </section>
-
-          {/* Panel 3: Database Quality */}
-          <section className={styles.dbQualityPanel}>
-            <div className={styles.panelHeader}>
-              <div className={styles.panelTitle}>Database Quality</div>
-              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                {dbQuality && (
-                  <span
-                    className={`${styles.panelBadge} ${
-                      dbQuality.alert_count > 0 ? styles.panelBadgeError : ''
-                    }`}
-                  >
-                    {dbQuality.total_queries} query · {dbQuality.alert_count} cảnh báo
-                  </span>
-                )}
-              </div>
-            </div>
-
-            <div className={styles.panelBody}>
-              {dbQualityLoading ? (
-                <div className={styles.dbQualityState}>
-                  <div className={styles.loadingSpinner} />
-                  <div className={styles.loadingText}>Đang tải DB Quality…</div>
-                </div>
-              ) : dbQualityError ? (
-                <div className={styles.dbQualityState}>
-                  <div className={styles.dbQualityErrorMsg}>
-                    <span>⚠</span> {dbQualityError}
+                    )}
                   </div>
                 </div>
-              ) : dbQuality && dbQuality.total_queries === 0 ? (
-                <div className={styles.dbQualityState}>
-                  <div className={styles.dbQualityEmptyMsg}>
-                    Không có query database trong giao dịch này.
-                  </div>
-                </div>
-              ) : dbQuality ? (
-                <div className={styles.dbQualityTableWrap}>
-                  <table className={styles.dbQualityTable}>
-                    <thead>
-                      <tr>
-                        <th className={styles.dbThQuery}>QUERY</th>
-                        <th className={styles.dbThNarrow}>BẢNG</th>
-                        <th className={styles.dbThNarrow}>GỌI</th>
-                        <th className={styles.dbThNarrow}>TỔNG MS</th>
-                        <th className={styles.dbThFlags}>CỜ</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {dbQuality.db_quality.map((item, idx) => (
-                        <tr
-                          key={idx}
-                          className={
-                            item.status === 'alert'
-                              ? styles.dbRowAlert
-                              : styles.dbRowOk
-                          }
+
+                <div className={styles.panelBody}>
+                  <div className={styles.flowStreamList}>
+                    {runtimeLines.map((line, index) => {
+                      const hasError = line.includes('[LỖI]');
+                      return (
+                        <div
+                          key={index}
+                          className={`${styles.flowStepRow} ${
+                            hasError ? styles.flowStepRowError : ''
+                          }`}
                         >
-                          <td
-                            className={styles.dbCellQuery}
-                            title={item.statement}
-                          >
-                            {truncateSql(item.statement)}
-                          </td>
-                          <td className={styles.dbCellNarrow}>{item.table}</td>
-                          <td
-                            className={`${styles.dbCellNarrow} ${
-                              item.call_count >= 3 ? styles.dbCallCountAlert : ''
-                            }`}
-                          >
-                            {item.call_count}x
-                          </td>
-                          <td className={styles.dbCellNarrow}>
-                            {typeof item.total_ms === 'number'
-                              ? item.total_ms.toFixed(1)
-                              : item.total_ms}
-                          </td>
-                          <td className={styles.dbCellFlags}>
-                            {(item.flags || []).map((flag, fi) => (
-                              <span
-                                key={fi}
-                                className={
-                                  flag.toUpperCase() === 'OK'
-                                    ? styles.flagOk
-                                    : styles.flagAlert
-                                }
-                              >
-                                {flag}
-                              </span>
-                            ))}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                          <span className={styles.stepIndex}>
+                            {String(index + 1).padStart(2, '0')}
+                          </span>
+                          <span className={styles.stepContent}>
+                            {line}
+                            {hasError && <span className={styles.errorTag}>CẢNH BÁO LỖI</span>}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
-              ) : null}
+              </section>
+
+              {/* Panel 2: Kết luận phân tích (Markdown) */}
+              <section className={styles.panel}>
+                <div className={styles.panelHeader}>
+                  <div className={styles.panelTitle}>Kết luận phân tích</div>
+                  <span className={styles.panelBadge}>AI Agent Audit</span>
+                </div>
+
+                <div className={styles.panelBody}>
+                  {summary && (
+                    <div className={styles.groundingNote}>
+                      Kết luận dưới đây dựa trên bảng đối chiếu tất định: {summary.matched} bước
+                      khớp, {summary.missing} bước thiếu, {summary.nfr_fail} NFR vi phạm.{' '}
+                      <button
+                        type="button"
+                        className={styles.inlineLink}
+                        onClick={() => setActiveTab('evidence')}
+                      >
+                        Xem bằng chứng từng bước →
+                      </button>
+                    </div>
+                  )}
+                  <div className={styles.markdownContent}>
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{flowAnalysis.detail}</ReactMarkdown>
+                  </div>
+                </div>
+              </section>
             </div>
-          </section>
-        </div>
+          )}
+
+          {activeTab === 'evidence' && (
+            <div className={styles.tabPane}>
+              <EvidenceMapping
+                report={evidence}
+                onRefresh={reloadEvidence}
+                isRefreshing={isEvidenceLoading}
+                error={evidenceError}
+              />
+            </div>
+          )}
+
+          {activeTab === 'trace' && (
+            <div className={styles.tabPane}>
+              <TraceTimeline
+                data={timeline}
+                isLoading={isTimelineLoading}
+                error={timelineError}
+                onRefresh={loadTimeline}
+              />
+            </div>
+          )}
+
+          {activeTab === 'db' && (
+            <div className={styles.tabPane}>
+              <DbQualityPanel
+                data={dbQuality}
+                isLoading={isDbLoading}
+                error={dbError}
+                fetchedAt={dbFetchedAt}
+                onRefresh={loadDbQuality}
+              />
+            </div>
+          )}
+        </>
       ) : null}
     </div>
   );
