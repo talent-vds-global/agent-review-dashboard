@@ -8,7 +8,7 @@ Operator) nhìn cùng một luồng nghiệp vụ nhưng thấy **bằng chứng
 | Chế độ | Nguồn dữ liệu | Dùng để |
 |---|---|---|
 | **Mô phỏng (Mock)** | `src/data/mock.ts` — dữ liệu tĩnh trong repo | Demo trọn vẹn 4 góc nhìn vai trò, không cần backend |
-| **Dữ liệu thật (API)** | Backend [agent-review](https://github.com/talent-vds-global/agent-review) | Xem kết luận thật của AI Agent cho một flow |
+| **Dữ liệu thật (API)** | Backend [agent-review](https://github.com/talent-vds-global/agent-review) | Kết luận thật của AI Agent cho một flow, kèm bằng chứng từng bước, sơ đồ trace rút gọn và số liệu database |
 
 Chế độ hiện tại lưu ở URL hash: `#live` = API thật, không hash = Mock.
 
@@ -58,7 +58,11 @@ agent-review-dashboard/
     └── screens/
         ├── Login/            # Đăng nhập
         ├── RoleLogin/        # Màn hình giới thiệu & chọn vai trò
-        ├── LiveAnalysis/     # Chế độ API thật
+        ├── LiveAnalysis/     # Chế độ API thật — 4 tab báo cáo
+        │   └── components/
+        │       ├── EvidenceMapping/  # Đối chiếu từng bước tài liệu ↔ dấu vết runtime
+        │       ├── TraceTimeline/    # Sơ đồ trace rút gọn (thay màn hình Jaeger)
+        │       └── DbQualityPanel/   # Số liệu db-quality đọc tại thời điểm xem
         └── Dashboard/        # Chế độ Mock
             ├── useDashboard.ts
             └── components/
@@ -111,7 +115,11 @@ Tạo file `.env.local` ở thư mục gốc repo nếu backend nằm chỗ khá
 
 ```env
 VITE_API_BASE_URL=http://10.0.0.5:8000
+VITE_JAEGER_URL=http://10.0.0.5:16686
 ```
+
+`VITE_JAEGER_URL` (mặc định `http://localhost:16686`) chỉ dùng cho nút **"Mở trong Jaeger"** ở tab
+Sơ đồ trace — khi cần xem đủ 100% span thay vì bản rút gọn.
 
 Client có sẵn **fallback**: nếu `fetch` tới `localhost` ném lỗi mạng, nó thử lại đúng URL đó với
 `127.0.0.1` — xử lý trường hợp trình duyệt phân giải `localhost` thành IPv6 `::1` trong khi Flask chỉ
@@ -218,21 +226,62 @@ curl -X POST http://localhost:8000/runtime -H "Content-Type: application/json" -
 
 ### Endpoint sử dụng
 
-| Gọi | Dùng cho |
+| Gọi | Lúc nào | Dùng cho |
+|---|---|---|
+| `GET /api/flows/<flow_id>/analysis` | mở màn hình | Verdict, `detail`, `runtime_flow`, `trace_id`, **`evidence`** (bảng đối chiếu đã lưu) |
+| `GET /api/analysis` | mở màn hình | Đổ danh sách flow vào dropdown |
+| `GET /api/flows/<flow_id>/evidence` | bấm *Đối chiếu lại* | Dựng lại bảng đối chiếu theo tài liệu Confluence hiện tại |
+| `GET /api/traces/<trace_id>/timeline` | mở tab *Sơ đồ trace* | Trace đã rút gọn |
+| `GET /api/db-quality?services=…` | mở tab *Chất lượng DB* | Số liệu db-quality tại thời điểm xem |
+
+Hai lời gọi đầu chạy song song; nếu lấy danh sách flow lỗi thì bỏ qua, chỉ lỗi ở lời gọi chính mới
+hiện thẻ báo lỗi. Ba lời gọi còn lại **chỉ chạy khi người dùng mở tab tương ứng**.
+
+### Bốn tab của báo cáo
+
+| Tab | Nội dung |
 |---|---|
-| `GET /api/flows/<flow_id>/analysis` | Nội dung chính: verdict, `detail`, `runtime_flow`, thời gian |
-| `GET /api/analysis` | Đổ danh sách flow vào dropdown chọn flow |
+| **Tổng quan** | Luồng runtime đánh số + kết luận Markdown của agent, kèm dòng nối sang bảng bằng chứng |
+| **Đối chiếu tài liệu** | Bảng từng bước §2.3 của trang Confluence ↔ dấu vết trong trace; bảng NFR có số đo thật; bảng rule |
+| **Sơ đồ trace** | Biểu đồ thác nước rút gọn: mỗi dòng là một lời gọi, truy vấn DB cuộn vào bước cha |
+| **Chất lượng DB** | Điểm, p50/p95/p99, số câu SQL, nghi vấn N+1, phát hiện và câu lệnh gọi nhiều nhất của từng service |
 
-Hai lời gọi chạy song song; nếu lấy danh sách flow lỗi thì bỏ qua, chỉ lỗi ở lời gọi chính mới hiện
-thẻ báo lỗi.
-
-### Giao diện
+**Tab Tổng quan**
 
 - **Panel trái — Luồng thực thi runtime**: tách `runtime_flow` theo dòng, đánh số, dòng nào chứa
   `[LỖI]` thì tô đỏ và gắn nhãn *CẢNH BÁO LỖI*. Badge đếm tổng số bước và số bước lỗi.
-- **Panel phải — Kết luận phân tích**: render `detail` bằng `react-markdown`.
+- **Panel phải — Kết luận phân tích**: render `detail` bằng `react-markdown`, phía trên là dòng
+  tóm tắt số bước khớp / thiếu / NFR vi phạm để đối chiếu nhanh với tab bằng chứng.
+
+**Tab Đối chiếu tài liệu**
+
+- Mỗi dòng là một bước trong tài liệu. Bấm vào dòng để mở hai cột: *dấu vết cần có* (theo file ánh
+  xạ) và *bằng chứng thu được* (span nào, service nào, bao nhiêu ms, câu SQL gì).
+- **Bước đúng cũng có bằng chứng** — không chỉ bước thiếu.
+- Bộ lọc: tất cả / chỉ bước có vấn đề / chỉ bước đã khớp.
+- Trạng thái: `Khớp` · `Khớp một phần` · `Thiếu` · `Không quan sát được` (bước không để lại span,
+  vd validate trong bộ nhớ) · `Ngoài nhánh` (nhánh thực tế không đi qua, vd saga dừng ở S2 khi HELD).
+- Nút **Đối chiếu lại theo tài liệu mới nhất** dựng lại bảng từ Confluence hiện tại mà **không** gọi
+  LLM — dùng khi vừa sửa tài liệu.
+
+**Tab Sơ đồ trace**
+
+- Thay cho việc mở Jaeger: 160 span thô của một giao dịch F1 rút còn ~15 dòng, vì đã bỏ span
+  Hibernate/ORM, gộp cặp client/server thành một dòng, và gom truy vấn JDBC vào bước cha.
+- Mỗi dòng: nhãn giao thức (HTTP/gRPC/KAFKA/WS), service, thời điểm bắt đầu và thời lượng, thời gian
+  xử lý phía server, chip `N SQL · X ms` bấm được để xem gom theo bảng.
+- Nút **Mở trong Jaeger** cho ai cần xem đủ 100% span.
+
+**Tab Chất lượng DB**
+
+- Số liệu đọc trực tiếp từ dashboard của `database-quality-library` (Topic #80) **tại thời điểm mở
+  tab**, không lưu lịch sử — mỗi lần bấm *Đọc lại số liệu* là một lần đo mới.
+- Chỉ hỏi những service có truy vấn DB trong trace đang xem.
+
+**Chung**
+
 - **Badge verdict**: `PASS` (✓ xanh) / `WARN` (⚠ vàng) / `FAIL` (✕ đỏ).
-- **Nút Làm mới**: gọi lại cả hai API. Không có auto-refresh — phải bấm tay.
+- **Nút Làm mới**: gọi lại API chính. Không có auto-refresh — phải bấm tay.
 - Thời gian format theo múi giờ `Asia/Ho_Chi_Minh`.
 
 ### Khi lỗi
@@ -305,6 +354,10 @@ agent-review-dashboard      :5173 (dev) hoặc :3000 (docker)
 | Đăng nhập | ⚠️ giả lập hoàn toàn ở client, mật khẩu để plaintext trong `src/data/dummy.ts` — **chỉ dùng cho demo** |
 | Dashboard 4 vai trò | ⚠️ chạy trên mock data, chưa nối API |
 | LiveAnalysis | ✅ nối API thật, nhưng chỉ hiển thị kết quả **post-deploy** |
+| Bảng đối chiếu tài liệu ↔ runtime | ✅ có, kèm bằng chứng cho cả bước đúng lẫn bước thiếu |
+| Sơ đồ trace rút gọn | ✅ có; bản ghi cũ không có `trace_id` thì tab này báo thiếu dữ liệu |
+| Số liệu DB | ✅ đọc tại thời điểm xem; ❌ không có lịch sử để so sánh theo thời gian |
+| Chạy phân tích mới từ UI | ❌ vẫn phải gọi `POST /runtime` bằng curl |
 | Phân quyền theo vai trò ở chế độ Live | ❌ chưa có, ai vào cũng thấy như nhau |
 | Auto refresh | ❌ phải bấm nút Làm mới |
 | Kết quả pre-merge trên UI | ❌ backend chưa lưu pre-merge vào DB |
@@ -320,6 +373,9 @@ agent-review-dashboard      :5173 (dev) hoặc :3000 (docker)
 | `Không có kết quả phân tích cho flow "F1"` | Chạy `POST /runtime` cho flow đó trước |
 | Lỗi CORS trong console | Backend phải bật `flask_cors.CORS(app)` và đang chạy |
 | Dropdown flow chỉ có `F1` | Bảng `analysis_results` mới có mỗi F1 — chạy thêm flow khác |
+| Tab *Đối chiếu tài liệu* báo "chưa có bảng đối chiếu" | Bản ghi tạo trước khi có tính năng này — chạy lại `POST /runtime` hoặc bấm *Đối chiếu lại ngay* |
+| Tab *Sơ đồ trace* báo thiếu `trace_id` | Bản ghi cũ (hoặc phân tích từ raw log) không gắn trace — chạy lại `POST /runtime` với trace thật |
+| Tab *Chất lượng DB* báo không đọc được | Dashboard db-quality của service đó chưa chạy (cổng 19082–19085) hoặc backend cấu hình sai `DB_QUALITY_URLS` |
 | Sửa `.env.local` mà không ăn | Khởi động lại `npm run dev`; Vite chỉ đọc env lúc start |
 | Docker build gọi sai backend | Truyền `VITE_API_BASE_URL` vào build arg (xem §7) |
 | Vào trang trắng sau khi đăng xuất | Xoá `localStorage` key `qc_portal_auth_token` và `qc_portal_user_profile` |
