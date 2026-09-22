@@ -25,9 +25,14 @@
   display: flex;
   align-items: center;
   gap: 14px;
+  min-width: 0;
+  /* Thanh chuyển Mock/Live là phần tử fixed nằm giữa đỉnh màn hình: chừa chỗ cho nó,
+     không thì breadcrumb dài sẽ chui xuống dưới và bị che. */
+  max-width: calc(50% - 130px);
 }
 
 .brandLogo {
+  flex-shrink: 0;
   font-size: 18px;
   font-weight: 900;
   letter-spacing: -0.02em;
@@ -49,13 +54,40 @@
   font-size: 14px;
 }
 
-.screenTitle {
-  font-size: 13px;
-  font-weight: 800;
-  color: var(--text-secondary);
+/* Breadcrumb ba mức: tổng quan hệ thống › service › luồng */
+.breadcrumb {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.crumb {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-muted);
+  padding: 2px 0;
+  border-bottom: 1px solid transparent;
+  max-width: 340px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+button.crumb:hover {
+  color: var(--text-primary);
+  border-bottom-color: var(--accent-red);
+}
+
+.crumbActive {
+  color: var(--text-primary);
+  cursor: default;
+}
+
+.crumbSep {
+  color: var(--text-muted);
+  font-size: 13px;
 }
 
 .livePill {
@@ -99,32 +131,6 @@
   display: flex;
   align-items: center;
   gap: 12px;
-}
-
-.flowSelectGroup {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-family: var(--font-mono);
-  font-size: 12px;
-}
-
-.flowSelectLabel {
-  font-weight: 700;
-  color: var(--text-muted);
-  text-transform: uppercase;
-}
-
-.flowSelect {
-  padding: 6px 12px;
-  font-family: var(--font-mono);
-  font-size: 12px;
-  font-weight: 700;
-  background: var(--bg-surface);
-  color: var(--text-primary);
-  border: 1px solid var(--border-dark);
-  cursor: pointer;
-  outline: none;
 }
 
 .refreshBtn {
@@ -327,85 +333,10 @@
   color: var(--text-secondary);
 }
 
-.panelBadgeError {
-  background: var(--accent-red-subtle);
-  border-color: var(--accent-red);
-  color: var(--accent-red);
-  font-weight: 800;
-}
-
 .panelBody {
   flex: 1;
   overflow-y: auto;
   padding: 24px;
-}
-
-/* Runtime Flow Log Stream */
-.flowStreamList {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  font-family: var(--font-mono);
-  font-size: 12px;
-  line-height: 1.6;
-}
-
-.flowStepRow {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 8px 12px;
-  background: #FAFAFA;
-  border: 1px solid var(--border-light);
-  transition: background-color 0.15s ease;
-}
-
-.flowStepRow:hover {
-  background: #F4F4F2;
-}
-
-.flowStepRowError {
-  background: #FEF2F2 !important;
-  border: 1px solid #F87171 !important;
-  box-shadow: 0 1px 3px rgba(229, 52, 42, 0.08);
-}
-
-.stepIndex {
-  color: var(--text-muted);
-  font-weight: 700;
-  min-width: 24px;
-  flex-shrink: 0;
-}
-
-.flowStepRowError .stepIndex {
-  color: var(--accent-red);
-}
-
-.stepContent {
-  flex: 1;
-  word-break: break-word;
-  color: var(--text-primary);
-}
-
-.flowStepRowError .stepContent {
-  color: #B91C1C;
-  font-weight: 700;
-}
-
-.errorTag {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 10px;
-  font-weight: 900;
-  background: var(--accent-red);
-  color: #FFFFFF;
-  padding: 2px 6px;
-  margin-left: 8px;
-  border-radius: 2px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  vertical-align: middle;
 }
 
 /* Detail Markdown Typography */
@@ -895,6 +826,73 @@
 }
 
 /* ===== Thanh tab của báo cáo chi tiết ===== */
+/* Nút chạy lại vòng phân tích (POST /runtime) + dòng báo kết quả của lần chạy */
+.runBtn {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 6px 12px;
+  background: var(--bg-dark);
+  color: #FFFFFF;
+  border: 1px solid var(--border-dark);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  transition: opacity 0.15s ease;
+}
+
+.runBtn:hover:not(:disabled) {
+  background: var(--accent-red);
+  border-color: var(--accent-red);
+}
+
+.runBtn:disabled {
+  opacity: 0.55;
+  cursor: progress;
+}
+
+.runBanner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 32px;
+  font-size: 12.5px;
+  background: var(--bg-subtle);
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border-light);
+  flex-shrink: 0;
+}
+
+.runBanner code {
+  font-size: 11px;
+}
+
+.runBannerDone {
+  background: #ECFDF5;
+  color: #047857;
+  border-bottom-color: #A7F3D0;
+}
+
+.runBannerError {
+  background: var(--accent-red-subtle);
+  color: var(--accent-red);
+  border-bottom-color: var(--accent-red);
+}
+
+.runBannerClose {
+  margin-left: auto;
+  font-size: 12px;
+  line-height: 1;
+  padding: 2px 6px;
+  color: inherit;
+  opacity: 0.6;
+}
+
+.runBannerClose:hover {
+  opacity: 1;
+}
+
 .tabBar {
   display: flex;
   align-items: stretch;

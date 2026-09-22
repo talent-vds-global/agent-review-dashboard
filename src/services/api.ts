@@ -142,35 +142,60 @@ export interface TraceDbQuery {
   total_ms: number;
 }
 
-export interface TraceStep {
-  span_id: string;
-  parent_step_id: string | null;
+/** Một dòng log runtime lấy theo trace_id (nguồn: Loki). */
+export interface TraceLogLine {
+  time_ns: string;
   service: string;
-  callee: string | null;
-  label: string;
-  operation: string;
-  type: 'http' | 'grpc' | 'kafka' | 'ws' | string;
-  kind: string;
-  start_ms: number;
-  duration_ms: number;
-  server_ms: number | null;
-  status_code: number | null;
-  error: boolean;
-  depth: number;
-  db_calls: number;
-  db_ms: number;
-  db_queries: TraceDbQuery[];
+  level: string;
+  span_id: string;
+  message: string;
 }
 
-export interface TraceTimelineData {
+export interface TraceLogStats {
+  available: boolean;
+  error: string;
+  source: string;
+  total: number;
+  truncated: boolean;
+  by_level: Record<string, number>;
+  error_count: number;
+  warn_count: number;
+  services: Record<string, number>;
+  errors: TraceLogLine[];
+  explore_url: string;
+}
+
+/** Số liệu tổng hợp của một trace — không kèm danh sách bước (dashboard đã bỏ sơ đồ trace). */
+export interface TraceMetrics {
   trace_id: string;
+  started_at_ms: number;
+  ended_at_ms: number;
   total_duration_ms: number;
   span_count: number;
   step_count: number;
   error_count: number;
   services: { name: string; spans: number; db_calls: number }[];
-  steps: TraceStep[];
+  db: {
+    calls: number;
+    total_ms: number;
+    tables: number;
+    top: { service: string; op: string; table: string; calls: number; total_ms: number }[];
+  };
   db_rollup: { service: string; op: string; table: string; calls: number; total_ms: number }[];
+  slowest_steps: {
+    service: string;
+    label: string;
+    duration_ms: number;
+    error: boolean;
+    status_code: number | null;
+  }[];
+  error_steps: {
+    service: string;
+    label: string;
+    status_code: number | null;
+    duration_ms: number;
+  }[];
+  logs?: TraceLogStats;
 }
 
 export interface DbQualityFinding {
@@ -219,6 +244,111 @@ export interface DbQualityResponse {
   configured: string[];
 }
 
+/* ===================== Tổng quan hệ thống (GET /api/overview) ===================== */
+
+export type IssueSeverity = 'high' | 'medium' | 'low';
+
+/** Một tiêu chí chất lượng mức hệ thống. `passed = null` nghĩa là chưa đủ dữ liệu để kết luận. */
+export interface OverviewMetric {
+  id: string;
+  question: string;
+  passed: boolean | null;
+  value: string;
+  detail: string;
+  source: string;
+}
+
+/** Một vấn đề đang bắt được, luôn mở ngược được về bằng chứng trong tab tương ứng. */
+export interface OverviewIssue {
+  id: string;
+  flow_id: string;
+  kind: string;
+  severity: IssueSeverity;
+  title: string;
+  detail: string;
+  service: string;
+  tab: string;
+  ref: string;
+}
+
+export interface IssueCounts {
+  high: number;
+  medium: number;
+  low: number;
+  total: number;
+}
+
+export interface OverviewFlow {
+  flow_id: string;
+  title: string;
+  slug: string;
+  entries: string[];
+  analyzed: boolean;
+  verdict: string;
+  analysis_id: number | null;
+  analysis_type: string;
+  trace_id: string;
+  created_at: string;
+  services: string[];
+  doc: { title?: string; version?: string; status?: string; error?: string };
+  branch: { code?: string; label?: string; status_code?: number | null };
+  summary: EvidenceReport['summary'] | null;
+  issues: OverviewIssue[];
+  issue_counts: IssueCounts;
+}
+
+export interface OverviewService {
+  name: string;
+  role: string;
+  flows: string[];
+  flows_analyzed: number;
+  /** Kết luận cho riêng service, tính trên các vấn đề quy về chính nó. */
+  verdict: string;
+  /** Verdict xấu nhất trong các luồng đi qua service — có thể do service khác gây ra. */
+  flow_verdict: string;
+  issues: OverviewIssue[];
+  issue_counts: IssueCounts;
+  db: {
+    available: boolean;
+    score: number | null;
+    metrics: DbQualityService['metrics'];
+    findings: number;
+  } | null;
+}
+
+export interface SystemOverview {
+  generated_at: string;
+  system: string;
+  health: {
+    status: 'healthy' | 'warning' | 'critical' | 'unknown';
+    metrics_passed: number;
+    metrics_evaluated: number;
+    metrics_total: number;
+    issues_high: number;
+    issues_total: number;
+  };
+  totals: {
+    flows_total: number;
+    flows_analyzed: number;
+    steps_total: number;
+    steps_checked: number;
+    matched: number;
+    partial: number;
+    missing: number;
+    not_observable: number;
+    not_in_branch: number;
+    nfr_pass: number;
+    nfr_fail: number;
+    extra_calls: number;
+    error_spans: number;
+  };
+  metrics: OverviewMetric[];
+  issues: OverviewIssue[];
+  services: OverviewService[];
+  flows: OverviewFlow[];
+  db: DbQualityResponse | null;
+}
+
 const FALLBACK_URL = BASE_URL.includes('localhost')
   ? BASE_URL.replace('localhost', '127.0.0.1')
   : null;
@@ -253,6 +383,70 @@ async function getJson<T>(path: string, what: string): Promise<T> {
     throw new Error(message);
   }
   return response.json();
+}
+
+async function postJson<T>(path: string, body: unknown, what: string): Promise<T> {
+  const response = await requestApi(path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  let data: Record<string, unknown> | null = null;
+  try {
+    data = await response.json();
+  } catch {
+    data = null;
+  }
+  if (!response.ok) {
+    // `POST /runtime` báo lỗi nghiệp vụ bằng `message` (400/422), các endpoint khác dùng `error`
+    const message =
+      (data?.message as string) ||
+      (data?.error as string) ||
+      `Không thể ${what}: HTTP ${response.status} (${response.statusText || 'Lỗi mạng'})`;
+    throw new Error(message);
+  }
+  return data as T;
+}
+
+/** Kết quả một lần chạy phân tích (rút gọn — phần nặng đọc lại qua các endpoint GET). */
+export interface RunAnalysisResult {
+  status: string;
+  id?: number;
+  flow_id: string;
+  trace_id?: string | null;
+  verdict: string;
+  detection?: {
+    kind: string;
+    flow_id: string;
+    reason: string;
+    overlays?: { variant: string; reason: string }[];
+  } | null;
+}
+
+/**
+ * Lấy trace mới nhất của một luồng rồi chạy lại toàn bộ vòng phân tích (đối chiếu + agent)
+ * POST /runtime
+ *
+ * Bỏ trống `flowId` thì backend tự nhận diện flow từ trace mới nhất. Lời gọi này **chậm**
+ * (có một lần gọi LLM) nên UI phải khoá nút và báo đang chạy.
+ */
+export async function runFlowAnalysis(flowId?: string): Promise<RunAnalysisResult> {
+  return postJson<RunAnalysisResult>(
+    '/runtime',
+    flowId ? { flow_id: flowId } : {},
+    `chạy phân tích cho luồng "${flowId || 'mới nhất'}"`
+  );
+}
+
+/**
+ * Tổng quan chất lượng toàn hệ thống, gộp theo service — màn dashboard đầu tiên
+ * GET /api/overview
+ */
+export async function fetchOverview(includeDb = false): Promise<SystemOverview> {
+  return getJson<SystemOverview>(
+    `/api/overview${includeDb ? '?db=1' : ''}`,
+    'tổng quan chất lượng hệ thống'
+  );
 }
 
 /**
@@ -290,13 +484,13 @@ export async function fetchFlowEvidence(
 }
 
 /**
- * Sơ đồ trace đã rút gọn (gộp client/server, cuộn truy vấn DB vào bước cha)
- * GET /api/traces/{trace_id}/timeline
+ * Số liệu tổng hợp của một trace: thời gian, span, log, lời gọi chậm/lỗi
+ * GET /api/traces/{trace_id}/metrics
  */
-export async function fetchTraceTimeline(traceId: string): Promise<TraceTimelineData> {
-  return getJson<TraceTimelineData>(
-    `/api/traces/${encodeURIComponent(traceId)}/timeline?db=1`,
-    `sơ đồ trace ${traceId}`
+export async function fetchTraceMetrics(traceId: string): Promise<TraceMetrics> {
+  return getJson<TraceMetrics>(
+    `/api/traces/${encodeURIComponent(traceId)}/metrics`,
+    `số liệu của trace ${traceId}`
   );
 }
 

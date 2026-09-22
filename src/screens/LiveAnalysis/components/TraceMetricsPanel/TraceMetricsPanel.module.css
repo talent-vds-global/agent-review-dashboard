@@ -1,0 +1,400 @@
+.panel {
+  background: var(--bg-surface);
+  border: var(--border-hairline);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.panelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 18px;
+  border-bottom: var(--border-strong);
+  flex-wrap: wrap;
+}
+
+.panelTitle {
+  font-size: 13px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.jaegerLink,
+.logLink {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border-light);
+  padding-bottom: 1px;
+}
+
+.jaegerLink:hover,
+.logLink:hover {
+  color: var(--accent-red);
+  border-color: var(--accent-red);
+}
+
+.refreshBtn {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 4px 10px;
+  border: var(--border-hairline);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+}
+
+.refreshBtn:hover:not(:disabled) {
+  border-color: var(--border-dark);
+  color: var(--text-primary);
+}
+
+.refreshBtn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.panelBody {
+  padding: 16px 18px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  overflow-y: auto;
+}
+
+.state,
+.errorState,
+.logOffline {
+  font-size: 12.5px;
+  color: var(--text-muted);
+  padding: 8px 0;
+}
+
+.errorState,
+.logOffline {
+  color: var(--accent-red);
+  background: var(--accent-red-subtle);
+  border: var(--border-red);
+  padding: 10px 12px;
+}
+
+/* ---------- Ô số liệu ---------- */
+
+.tileGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1px;
+  background: var(--border-light);
+  border: var(--border-hairline);
+}
+
+.tile {
+  background: var(--bg-surface);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.tile.tileBad {
+  background: var(--accent-red-subtle);
+}
+
+.tileValue {
+  font-family: var(--font-mono);
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+
+.tileBad .tileValue {
+  color: var(--accent-red);
+}
+
+.tileLabel {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.tileNote {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---------- Khối con ---------- */
+
+.subBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.subTitleRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.subTitle {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* ---------- Bảng NFR ---------- */
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+}
+
+.table th {
+  text-align: left;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  border-bottom: var(--border-hairline);
+  padding: 6px 8px;
+  font-weight: 700;
+}
+
+.table td {
+  padding: 8px;
+  border-bottom: var(--border-hairline);
+  vertical-align: top;
+}
+
+.table tr:last-child td {
+  border-bottom: none;
+}
+
+.rowBad {
+  background: var(--accent-red-subtle);
+}
+
+.mono {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+}
+
+.num {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.point {
+  color: var(--text-secondary);
+  font-size: 12px;
+  max-width: 360px;
+}
+
+.tagPass,
+.tagFail,
+.tagUnknown {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 700;
+  padding: 3px 7px;
+  white-space: nowrap;
+}
+
+.tagPass {
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+}
+
+.tagFail {
+  background: var(--accent-red);
+  color: #fff;
+}
+
+.tagUnknown {
+  background: var(--bg-subtle);
+  color: var(--text-muted);
+}
+
+/* ---------- Thanh thời gian ---------- */
+
+.barList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.barRow {
+  display: grid;
+  grid-template-columns: 110px minmax(0, 1fr) 120px 64px;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+}
+
+.barService {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.barLabel {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-secondary);
+}
+
+.barTrack {
+  height: 8px;
+  background: var(--bg-subtle);
+  display: block;
+}
+
+.barFill {
+  display: block;
+  height: 100%;
+  background: var(--text-primary);
+}
+
+.barFill.barFillBad {
+  background: var(--accent-red);
+}
+
+.barValue {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  text-align: right;
+}
+
+/* ---------- Lời gọi lỗi ---------- */
+
+.errorList {
+  display: flex;
+  flex-direction: column;
+  border: var(--border-red);
+}
+
+.errorRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  background: var(--accent-red-subtle);
+  border-bottom: 1px solid rgba(229, 52, 42, 0.2);
+  font-size: 12px;
+}
+
+.errorRow:last-child {
+  border-bottom: none;
+}
+
+.errorService {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--accent-red);
+  font-weight: 700;
+}
+
+.errorLabel {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.errorCode,
+.errorDuration {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+/* ---------- Log ---------- */
+
+.logList {
+  display: flex;
+  flex-direction: column;
+  border: var(--border-hairline);
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.logRow {
+  display: grid;
+  grid-template-columns: 74px 56px 150px minmax(0, 1fr);
+  gap: 10px;
+  padding: 7px 12px;
+  border-bottom: var(--border-hairline);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  align-items: baseline;
+}
+
+.logRow:last-child {
+  border-bottom: none;
+}
+
+.logTime {
+  color: var(--text-muted);
+}
+
+.logLevel {
+  color: var(--accent-red);
+  font-weight: 700;
+}
+
+.logService {
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.logMessage {
+  color: var(--text-primary);
+  word-break: break-word;
+  line-height: 1.5;
+}
+
+@media (max-width: 900px) {
+  .barRow {
+    grid-template-columns: 90px minmax(0, 1fr) 56px;
+  }
+
+  .barTrack {
+    display: none;
+  }
+
+  .logRow {
+    grid-template-columns: 60px 50px minmax(0, 1fr);
+  }
+
+  .logService {
+    display: none;
+  }
+}
