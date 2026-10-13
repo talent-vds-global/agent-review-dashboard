@@ -8,6 +8,8 @@ interface SystemOverviewProps {
   data: Overview;
   onOpenService: (name: string) => void;
   onOpenIssue: (issue: OverviewIssue) => void;
+  /** Khối chèn ngay dưới băng trạng thái (panel kích hoạt phân tích). */
+  extra?: React.ReactNode;
 }
 
 const HEALTH_LABEL: Record<string, string> = {
@@ -93,6 +95,7 @@ export const SystemOverview: React.FC<SystemOverviewProps> = ({
   data,
   onOpenService,
   onOpenIssue,
+  extra,
 }) => {
   const { health, totals, metrics, issues, services } = data;
 
@@ -133,6 +136,8 @@ export const SystemOverview: React.FC<SystemOverviewProps> = ({
           </div>
         </div>
       </section>
+
+      {extra}
 
       {/* Các tiêu chí chất lượng, trả lời bằng số liệu thật */}
       <section className={styles.block}>

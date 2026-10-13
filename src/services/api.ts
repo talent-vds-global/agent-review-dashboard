@@ -132,6 +132,10 @@ export interface FlowAnalysisDetail {
   runtime_flow: string;
   trace_id?: string | null;
   evidence?: EvidenceReport | null;
+  /** Nguồn kích hoạt lượt phân tích này (manual / schedule_daily / confluence_*) */
+  triggered_by?: string | null;
+  /** Phiên bản trang Confluence đã dùng để đối chiếu */
+  spec_version?: number | null;
   created_at: string;
 }
 
@@ -501,4 +505,76 @@ export async function fetchTraceMetrics(traceId: string): Promise<TraceMetrics> 
 export async function fetchDbQuality(services?: string[]): Promise<DbQualityResponse> {
   const query = services && services.length ? `?services=${encodeURIComponent(services.join(','))}` : '';
   return getJson<DbQualityResponse>(`/api/db-quality${query}`, 'số liệu chất lượng database');
+}
+
+// ========== Trigger (lịch hằng ngày, Confluence, thủ công) ==========
+
+/** Nguồn đã kích hoạt một lượt phân tích. */
+export type TriggerSource = 'manual' | 'schedule_daily' | 'confluence_poll' | 'confluence_webhook';
+
+export interface TriggerFlowResult {
+  flow_id: string;
+  status: 'done' | 'skipped' | 'failed';
+  verdict?: string;
+  result_id?: number;
+  trace_id?: string | null;
+  spec_version?: number | null;
+  message?: string;
+}
+
+export interface TriggerRun {
+  id: number;
+  triggered_by: TriggerSource | string;
+  reason: string | null;
+  flow_ids: string[];
+  status: 'queued' | 'running' | 'done' | 'skipped' | 'failed';
+  results: TriggerFlowResult[] | null;
+  created_at: string;
+  started_at: string | null;
+  finished_at: string | null;
+}
+
+export interface SpecVersion {
+  flow_id: string;
+  page_id: string;
+  version: number;
+  title: string;
+  page_updated_at: string;
+  checked_at: string;
+  changed_at: string;
+}
+
+export interface TriggerStatus {
+  scheduler: {
+    enabled: boolean;
+    started_at: string | null;
+    daily: { at: string | null; timezone: string; catch_up: boolean; next_run: string | null };
+    confluence_poll: {
+      interval_seconds: number;
+      last: { at: string; checked: number; changed: string[]; errors: number; run_id: number | null } | null;
+    };
+    confluence_webhook: { token_required: boolean };
+  };
+  queue: { queued: number; running_run_id: number | null; running_flow_id: string | null };
+  spec_versions: SpecVersion[];
+  runs: TriggerRun[];
+}
+
+/** GET /api/triggers */
+export async function fetchTriggerStatus(): Promise<TriggerStatus> {
+  return getJson<TriggerStatus>('/api/triggers?limit=8', 'trạng thái trigger');
+}
+
+/** POST /api/triggers/run — chạy nền, trả ngay run_id. Bỏ trống `flowIds` = mọi luồng. */
+export async function triggerManualRun(flowIds?: string[]): Promise<{ run_id: number; flow_ids: string[] }> {
+  return postJson('/api/triggers/run', flowIds?.length ? { flow_ids: flowIds } : {}, 'xếp lượt phân tích');
+}
+
+/** POST /api/triggers/confluence/check — hỏi Confluence ngay, trang nào đổi thì xếp lượt. */
+export async function triggerConfluenceCheck(): Promise<{
+  changed: { flow_id: string; old_version: number | null; version: number }[];
+  errors: { flow_id: string; error: string }[];
+  run_id: number | null;
+}> {
+  return postJson('/api/triggers/confluence/check', {}, 'kiểm tra tài liệu Confluence');
 }

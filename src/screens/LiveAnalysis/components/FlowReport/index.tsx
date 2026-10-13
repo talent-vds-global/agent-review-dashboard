@@ -48,6 +48,13 @@ interface FlowReportProps {
   onDismissRun: () => void;
 }
 
+const TRIGGER_LABEL: Record<string, string> = {
+  manual: 'thủ công',
+  schedule_daily: 'lịch hằng ngày',
+  confluence_poll: 'tài liệu đổi (polling)',
+  confluence_webhook: 'tài liệu đổi (webhook)',
+};
+
 function formatTime(value?: string): string {
   if (!value) return '--:--';
   const date = new Date(value);
@@ -149,6 +156,18 @@ export const FlowReport: React.FC<FlowReportProps> = ({
           {traceId && (
             <span className={styles.typeBadge} title={traceId}>
               Trace: {traceId.slice(0, 16)}…
+            </span>
+          )}
+
+          {analysis?.triggered_by && (
+            <span className={styles.typeBadge} title="Nguồn đã kích hoạt lần phân tích này">
+              Kích hoạt: {TRIGGER_LABEL[analysis.triggered_by] || analysis.triggered_by}
+            </span>
+          )}
+
+          {analysis?.spec_version != null && (
+            <span className={styles.typeBadge} title="Phiên bản trang Confluence đã dùng để đối chiếu">
+              Tài liệu: v{analysis.spec_version}
             </span>
           )}
         </div>

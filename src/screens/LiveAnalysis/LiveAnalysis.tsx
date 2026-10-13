@@ -4,6 +4,7 @@ import { useLiveAnalysis } from './useLiveAnalysis';
 import { SystemOverview } from './components/SystemOverview';
 import { ServiceDetail } from './components/ServiceDetail';
 import { FlowReport } from './components/FlowReport';
+import { TriggerPanel } from './components/TriggerPanel';
 import styles from './LiveAnalysis.module.css';
 
 interface LiveAnalysisProps {
@@ -138,7 +139,12 @@ export const LiveAnalysis: React.FC<LiveAnalysisProps> = ({ initialFlowId, onBac
           </div>
         </div>
       ) : !overview ? null : view === 'overview' ? (
-        <SystemOverview data={overview} onOpenService={openService} onOpenIssue={openIssue} />
+        <SystemOverview
+          data={overview}
+          onOpenService={openService}
+          onOpenIssue={openIssue}
+          extra={<TriggerPanel onRunFinished={reloadOverview} />}
+        />
       ) : view === 'service' && selectedService ? (
         <ServiceDetail
           service={selectedService}
