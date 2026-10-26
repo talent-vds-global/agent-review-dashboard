@@ -24,27 +24,25 @@ export function App() {
     handleGoToLogin,
   } = useApp();
 
-  const [viewMode, setViewMode] = useState<'mock' | 'live'>(() => {
-    return window.location.hash === '#live' ? 'live' : 'mock';
-  });
+  const [viewMode, setViewMode] = useState<'mock' | 'live'>('live');
 
   useEffect(() => {
     const handleHashChange = () => {
-      setViewMode(window.location.hash === '#live' ? 'live' : 'mock');
+      if (window.location.hash !== '#live') {
+        window.location.hash = '#live';
+      }
     };
+
+    if (window.location.hash !== '#live') {
+      window.location.hash = '#live';
+    }
 
     window.addEventListener('hashchange', handleHashChange);
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
-  const handleSwitchToMock = () => {
-    setViewMode('mock');
-    window.location.hash = '';
-  };
-
-  const handleSwitchToLive = () => {
-    setViewMode('live');
-    window.location.hash = '#live';
+  const handleBackToProjects = () => {
+    navigate('/projects');
   };
 
   // Logout: xoá auth context rồi redirect về /login
@@ -64,34 +62,23 @@ export function App() {
 
   return (
     <div className="app-container">
-      {/* Thanh chuyển đổi chế độ Mock / Live API */}
-      <div className="portal-top-nav-tabs" role="tablist" aria-label="Portal Mode Switcher">
+      {/* Thanh tab hiển thị chế độ phân tích */}
+      <div className="portal-top-nav-tabs" role="tablist" aria-label="Portal Navigation">
         <button
           type="button"
           role="tab"
-          aria-selected={viewMode === 'mock'}
-          className={`portal-nav-tab ${viewMode === 'mock' ? 'active' : ''}`}
-          onClick={handleSwitchToMock}
-          title="Chế độ hiển thị dữ liệu mô phỏng"
-        >
-          <span>Mô phỏng (Mock)</span>
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={viewMode === 'live'}
-          className={`portal-nav-tab ${viewMode === 'live' ? 'active' : ''}`}
-          onClick={handleSwitchToLive}
-          title="Xem phân tích trực tiếp từ Backend API thật"
+          aria-selected={true}
+          className="portal-nav-tab active"
+          title="Xem phân tích chất lượng hệ thống trực tiếp từ Backend API"
         >
           <span className="live-nav-dot" />
-          <span>Dữ liệu thật (API)</span>
+          <span>Phân tích trực tiếp (Live)</span>
         </button>
       </div>
 
       {/* Hiển thị màn hình tương ứng */}
       {viewMode === 'live' ? (
-        <LiveAnalysis onBackToMock={handleSwitchToMock} />
+        <LiveAnalysis onBackToProjects={handleBackToProjects} />
       ) : (
         <>
           {effectiveView === 'login' && (

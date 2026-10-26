@@ -10,6 +10,7 @@ import styles from './LiveAnalysis.module.css';
 interface LiveAnalysisProps {
   initialFlowId?: string;
   onBackToMock?: () => void;
+  onBackToProjects?: () => void;
 }
 
 /**
@@ -20,7 +21,11 @@ interface LiveAnalysisProps {
  * Mức ngoài cùng trả lời "hệ thống có đạt không và đang bắt được lỗi gì"; càng đi sâu càng
  * nhiều bằng chứng. Phần vẽ lại trace đã bỏ — trace giờ chỉ còn ở dạng số liệu trong báo cáo.
  */
-export const LiveAnalysis: React.FC<LiveAnalysisProps> = ({ initialFlowId, onBackToMock }) => {
+export const LiveAnalysis: React.FC<LiveAnalysisProps> = ({
+  initialFlowId,
+  onBackToMock,
+  onBackToProjects,
+}) => {
   const portal = useLiveAnalysis(initialFlowId);
   const {
     view,
@@ -100,7 +105,19 @@ export const LiveAnalysis: React.FC<LiveAnalysisProps> = ({ initialFlowId, onBac
             <span>{isRefreshing ? 'Đang tải...' : 'Làm mới'}</span>
           </button>
 
-          {onBackToMock && (
+          {onBackToProjects && (
+            <button
+              type="button"
+              className={styles.backBtn}
+              onClick={onBackToProjects}
+              title="Trở về màn hình danh sách dự án"
+            >
+              <span>←</span>
+              <span>Danh sách dự án</span>
+            </button>
+          )}
+
+          {onBackToMock && !onBackToProjects && (
             <button
               type="button"
               className={styles.backBtn}
