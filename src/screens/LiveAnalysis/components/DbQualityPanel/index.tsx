@@ -196,7 +196,7 @@ export const DbQualityPanel: React.FC<DbQualityPanelProps> = ({
     <div className={styles.wrapper}>
       <div className={styles.topBar}>
         <div>
-          <div className={styles.topTitle}>Chất lượng truy vấn database (Topic #80)</div>
+          <div className={styles.topTitle}>Chất lượng truy vấn database (database-quality-library)</div>
           <div className={styles.topMeta}>
             Số liệu đọc trực tiếp từ dashboard của từng service lúc <strong>{formatTime(fetchedAt)}</strong> —
             không lưu lịch sử, mỗi lần mở tab là một lần đo mới.
