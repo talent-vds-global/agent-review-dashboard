@@ -331,6 +331,7 @@ export const FlowReport: React.FC<FlowReportProps> = ({
                 isLoading={isMetricsLoading}
                 error={metricsError}
                 onRefresh={onReloadMetrics}
+                errorCalls={analysis.evidence?.summary?.error_calls}
                 onOpenEvidence={() => onChangeTab('evidence')}
               />
             </div>

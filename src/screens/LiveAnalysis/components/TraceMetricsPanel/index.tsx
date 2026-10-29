@@ -10,6 +10,11 @@ interface TraceMetricsPanelProps {
   isLoading?: boolean;
   error?: string | null;
   onRefresh?: () => void;
+  /**
+   * Số lời gọi lỗi mà verdict đã tính (bỏ mã là kết cục nghiệp vụ của nhánh). Không có thì
+   * dùng số span lỗi của trace.
+   */
+  errorCalls?: number;
   /** Chuyển sang tab Đối chiếu tài liệu, nơi có bảng NFR đầy đủ. */
   onOpenEvidence?: () => void;
 }
@@ -65,6 +70,7 @@ export const TraceMetricsPanel: React.FC<TraceMetricsPanelProps> = ({
   isLoading,
   error,
   onRefresh,
+  errorCalls,
   onOpenEvidence,
 }) => {
   const nfrFail = nfrs.filter((n) => n.status === 'FAIL');
@@ -122,10 +128,16 @@ export const TraceMetricsPanel: React.FC<TraceMetricsPanelProps> = ({
                 note={`${data.step_count} bước · ${data.services.length} service`}
               />
               <Tile
-                value={data.error_count}
+                value={errorCalls ?? data.error_count}
                 label="Lời gọi lỗi"
-                note={data.error_count ? 'Xem chi tiết bên dưới' : 'Không có span lỗi'}
-                bad={data.error_count > 0}
+                note={
+                  errorCalls != null && errorCalls !== data.error_count
+                    ? `${data.error_count} span lỗi, phần còn lại là kết cục nghiệp vụ`
+                    : (errorCalls ?? data.error_count)
+                      ? 'Xem chi tiết bên dưới'
+                      : 'Không có span lỗi'
+                }
+                bad={(errorCalls ?? data.error_count) > 0}
               />
               <Tile
                 value={data.db.calls}
