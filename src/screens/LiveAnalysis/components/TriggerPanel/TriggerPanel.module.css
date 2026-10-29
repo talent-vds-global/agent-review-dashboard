@@ -260,3 +260,18 @@
 .details[open] .detailsSummary {
   margin-bottom: 10px;
 }
+
+.chipFailed {
+  border-color: var(--accent-red);
+  background: var(--accent-red-subtle);
+  color: var(--accent-red);
+  font-weight: 700;
+}
+
+.failMessage {
+  margin-top: 4px;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--accent-red);
+  word-break: break-word;
+}

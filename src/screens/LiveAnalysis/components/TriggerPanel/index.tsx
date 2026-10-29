@@ -255,15 +255,33 @@ export const TriggerPanel: React.FC<TriggerPanelProps> = ({ onRunFinished }) => 
                           <span
                             key={r.flow_id}
                             className={`${styles.chip} ${
-                              'verdict' in r && r.verdict ? styles[`v_${r.verdict}`] || '' : ''
+                              r.status === 'failed'
+                                ? styles.chipFailed
+                                : 'verdict' in r && r.verdict
+                                  ? styles[`v_${r.verdict}`] || ''
+                                  : ''
                             }`}
                             title={'message' in r && r.message ? r.message : ''}
                           >
                             {r.flow_id}
-                            {'verdict' in r && r.verdict ? ` ${r.verdict}` : r.status === 'skipped' ? ' —' : ''}
+                            {r.status === 'failed'
+                              ? ' LỖI'
+                              : 'verdict' in r && r.verdict
+                                ? ` ${r.verdict}`
+                                : r.status === 'skipped'
+                                  ? ' —'
+                                  : ''}
                           </span>
                         ))}
                       </div>
+                      {/* Lỗi hiện thẳng ra, không giấu trong tooltip */}
+                      {(run.results || [])
+                        .filter((r) => r.status === 'failed' && r.message)
+                        .map((r) => (
+                          <div key={r.flow_id} className={styles.failMessage}>
+                            {r.flow_id}: {r.message}
+                          </div>
+                        ))}
                     </td>
                     <td>{formatTime(run.created_at)}</td>
                   </tr>
