@@ -139,6 +139,11 @@ export const EvidenceMapping: React.FC<EvidenceMappingProps> = ({
           <span className={`${styles.countChip} ${summary.nfr_fail > 0 ? styles.stMissing : styles.stMatched}`}>
             NFR vi phạm {summary.nfr_fail}/{summary.nfr_fail + summary.nfr_pass}
           </span>
+          {(summary.error_calls ?? 0) > 0 && (
+            <span className={`${styles.countChip} ${styles.stMissing}`}>
+              Lời gọi lỗi {summary.error_calls}
+            </span>
+          )}
         </div>
       </div>
 
@@ -171,7 +176,8 @@ export const EvidenceMapping: React.FC<EvidenceMappingProps> = ({
       {/* Không đọc được tài liệu -> nói rõ lý do thay vì hiện bảng rỗng */}
       {doc.error && (
         <div className={styles.docWarning}>
-          Không đọc được tài liệu thiết kế: {doc.error} — bảng dưới đây có thể thiếu bước.
+          Không dùng được tài liệu thiết kế: {doc.error} — verifier không tự kết luận được trên
+          tài liệu này nên chuyển người xử lý (ESCALATE).
         </div>
       )}
 

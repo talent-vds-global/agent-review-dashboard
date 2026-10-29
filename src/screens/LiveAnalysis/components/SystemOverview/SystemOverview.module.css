@@ -176,7 +176,7 @@
 .serviceRow {
   display: grid;
   grid-template-columns:
-    minmax(200px, 1.5fr) 110px minmax(170px, 1.1fr) 80px minmax(190px, 1.2fr) 16px;
+    minmax(200px, 1.5fr) 150px minmax(170px, 1.1fr) 80px minmax(190px, 1.2fr) 16px;
   align-items: center;
   gap: 16px;
   padding: 10px 18px;
@@ -356,7 +356,7 @@
   /* Hẹp thì bỏ cột điểm DB và mũi tên, dồn còn ba cột đọc được */
   .serviceListHead,
   .serviceRow {
-    grid-template-columns: minmax(160px, 1.4fr) 110px minmax(150px, 1fr);
+    grid-template-columns: minmax(160px, 1.4fr) 150px minmax(150px, 1fr);
     row-gap: 8px;
   }
 

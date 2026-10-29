@@ -10,6 +10,8 @@ interface TraceMetricsPanelProps {
   isLoading?: boolean;
   error?: string | null;
   onRefresh?: () => void;
+  /** Chuyển sang tab Đối chiếu tài liệu, nơi có bảng NFR đầy đủ. */
+  onOpenEvidence?: () => void;
 }
 
 function formatMs(value: number | null | undefined): string {
@@ -52,9 +54,9 @@ const Tile: React.FC<{
 /**
  * Số liệu của luồng trace — thay cho phần vẽ lại từng lời gọi.
  *
- * Trả lời đúng những câu hỏi người xem cần: chạy hết bao lâu, thu được bao nhiêu span và log,
- * có ngưỡng NFR nào bị vượt, có lời gọi hay dòng log nào lỗi. Muốn xem đủ 100% span thì mở
- * trace trong Jaeger — dashboard không vẽ lại.
+ * Bốn con số chính hiện ngay (thời gian, span, lời gọi lỗi, truy vấn DB); bảng NFR chỉ nằm ở
+ * tab Đối chiếu tài liệu, ở đây còn số NFR đạt. Phần chi tiết (bước chậm, lời gọi lỗi, log lỗi,
+ * service tham gia) thu gọn, bấm mới mở. Muốn xem đủ 100% span thì mở trace trong Jaeger.
  */
 export const TraceMetricsPanel: React.FC<TraceMetricsPanelProps> = ({
   data,
@@ -63,6 +65,7 @@ export const TraceMetricsPanel: React.FC<TraceMetricsPanelProps> = ({
   isLoading,
   error,
   onRefresh,
+  onOpenEvidence,
 }) => {
   const nfrFail = nfrs.filter((n) => n.status === 'FAIL');
   const nfrPass = nfrs.filter((n) => n.status === 'PASS');
@@ -116,96 +119,45 @@ export const TraceMetricsPanel: React.FC<TraceMetricsPanelProps> = ({
               <Tile
                 value={data.span_count}
                 label="Span thu được"
-                note={`${data.step_count} bước nghiệp vụ`}
+                note={`${data.step_count} bước · ${data.services.length} service`}
               />
               <Tile
-                value={data.services.length}
-                label="Service tham gia"
-                note={data.services
-                  .slice(0, 3)
-                  .map((s) => s.name.replace('ewallet-', ''))
-                  .join(', ')}
+                value={data.error_count}
+                label="Lời gọi lỗi"
+                note={data.error_count ? 'Xem chi tiết bên dưới' : 'Không có span lỗi'}
+                bad={data.error_count > 0}
               />
               <Tile
                 value={data.db.calls}
                 label="Truy vấn DB"
                 note={`${formatMs(data.db.total_ms)} · ${data.db.tables} bảng`}
               />
-              <Tile
-                value={`${nfrPass.length}/${nfrs.length}`}
-                label="NFR đạt"
-                note={nfrFail.length ? `${nfrFail.length} ngưỡng bị vượt` : 'Trong ngưỡng'}
-                bad={nfrFail.length > 0}
-              />
-              <Tile
-                value={data.error_count}
-                label="Lời gọi lỗi"
-                note={data.error_count ? 'Xem danh sách bên dưới' : 'Không có span lỗi'}
-                bad={data.error_count > 0}
-              />
-              <Tile
-                value={logs?.available ? logs.total : '—'}
-                label="Dòng log thu được"
-                note={
-                  logs?.available
-                    ? `${logs.error_count} lỗi · ${logs.warn_count} cảnh báo${
-                        logs.truncated ? ' (đã cắt bớt)' : ''
-                      }`
-                    : 'Không đọc được log'
-                }
-                bad={!!logs?.available && logs.error_count > 0}
-              />
             </div>
 
-            {/* NFR: điểm đo và mức đo được */}
             {nfrs.length > 0 && (
-              <div className={styles.subBlock}>
-                <div className={styles.subTitle}>Yêu cầu phi chức năng</div>
-                <table className={styles.table}>
-                  <thead>
-                    <tr>
-                      <th>Mã</th>
-                      <th>Điểm đo</th>
-                      <th className={styles.num}>Đo được</th>
-                      <th className={styles.num}>Ngưỡng</th>
-                      <th>Kết quả</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {nfrs.map((nfr) => (
-                      <tr key={nfr.code} className={nfr.status === 'FAIL' ? styles.rowBad : ''}>
-                        <td className={styles.mono}>{nfr.code}</td>
-                        <td className={styles.point}>{nfr.point}</td>
-                        <td className={`${styles.num} ${styles.mono}`}>
-                          {nfr.measured == null ? '—' : `${nfr.measured}${nfr.unit}`}
-                        </td>
-                        <td className={`${styles.num} ${styles.mono}`}>
-                          {nfr.operator} {nfr.threshold}
-                          {nfr.unit}
-                        </td>
-                        <td>
-                          <span
-                            className={
-                              nfr.status === 'FAIL'
-                                ? styles.tagFail
-                                : nfr.status === 'PASS'
-                                  ? styles.tagPass
-                                  : styles.tagUnknown
-                            }
-                          >
-                            {nfr.status === 'FAIL'
-                              ? 'VƯỢT NGƯỠNG'
-                              : nfr.status === 'PASS'
-                                ? 'ĐẠT'
-                                : 'CHƯA ĐO ĐƯỢC'}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div className={`${styles.nfrLine} ${nfrFail.length ? styles.nfrLineBad : ''}`}>
+                NFR đạt <b>{nfrPass.length}/{nfrs.length}</b>
+                {nfrFail.length > 0 && ` — vượt ngưỡng: ${nfrFail.map((n) => n.code).join(', ')}`}
+                {onOpenEvidence && (
+                  <button type="button" className={styles.nfrLink} onClick={onOpenEvidence}>
+                    Xem bảng NFR →
+                  </button>
+                )}
               </div>
             )}
+
+            <details className={styles.details} open={data.error_count > 0}>
+              <summary className={styles.detailsSummary}>
+                Chi tiết trace: bước chậm nhất, lời gọi lỗi, log lỗi
+                {logs?.available ? ` (${logs.total} dòng log, ${logs.error_count} lỗi)` : ''}
+              </summary>
+
+              <div className={styles.subBlock}>
+                <div className={styles.subTitle}>Service tham gia</div>
+                <div className={styles.point}>
+                  {data.services.map((sv) => `${sv.name} (${sv.spans} span)`).join(' · ')}
+                </div>
+              </div>
 
             {/* Nơi tốn thời gian nhất — để biết nếu vượt ngưỡng thì nghẽn ở đâu */}
             {data.slowest_steps.length > 0 && (
@@ -292,6 +244,7 @@ export const TraceMetricsPanel: React.FC<TraceMetricsPanelProps> = ({
                 )}
               </div>
             )}
+            </details>
           </>
         )}
       </div>

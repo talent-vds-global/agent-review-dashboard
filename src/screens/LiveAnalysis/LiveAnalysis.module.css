@@ -90,43 +90,6 @@ button.crumb:hover {
   font-size: 13px;
 }
 
-.livePill {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  font-weight: 800;
-  color: #059669;
-  background: #ECFDF5;
-  border: 1px solid #A7F3D0;
-  padding: 2px 8px;
-  letter-spacing: 0.05em;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.pulseDot {
-  width: 6px;
-  height: 6px;
-  background: #10B981;
-  border-radius: 50%;
-  animation: livePulse 1.8s infinite;
-}
-
-@keyframes livePulse {
-  0% {
-    transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
-  }
-  70% {
-    transform: scale(1.1);
-    box-shadow: 0 0 0 5px rgba(16, 185, 129, 0);
-  }
-  100% {
-    transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
-  }
-}
-
 .headerActions {
   display: flex;
   align-items: center;
@@ -983,4 +946,27 @@ button.crumb:hover {
     padding: 10px 12px;
     font-size: 12px;
   }
+}
+
+/* Khối lý do của verdict (RETRY: danh sách vi phạm; ESCALATE: vì sao cần người quyết) */
+.reasonBox {
+  border: 1px solid;
+  padding: 10px 12px;
+  margin-bottom: 16px;
+}
+
+.reasonTitle {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 6px;
+}
+
+.reasonList {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 12.5px;
+  line-height: 1.6;
 }

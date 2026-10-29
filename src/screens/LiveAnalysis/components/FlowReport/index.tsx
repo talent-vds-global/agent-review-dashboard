@@ -14,6 +14,7 @@ import { EvidenceMapping } from '../EvidenceMapping';
 import { DbQualityPanel } from '../DbQualityPanel';
 import { TraceMetricsPanel } from '../TraceMetricsPanel';
 import styles from '../../LiveAnalysis.module.css';
+import { VERDICT_ICON, VERDICT_LABEL, normalizeVerdict, verdictTone } from '../../verdict';
 
 interface FlowReportProps {
   flow: OverviewFlow | null;
@@ -71,11 +72,12 @@ function formatTime(value?: string): string {
 }
 
 function verdictClass(verdict?: string): string {
-  const v = (verdict || '').toUpperCase();
-  if (v === 'PASS') return styles.verdictPass;
-  if (v === 'WARN') return styles.verdictWarn;
-  if (v === 'FAIL') return styles.verdictFail;
-  return styles.verdictDefault;
+  return verdictTone(verdict, {
+    pass: styles.verdictPass,
+    retry: styles.verdictWarn,
+    escalate: styles.verdictFail,
+    none: styles.verdictDefault,
+  });
 }
 
 /**
@@ -111,6 +113,8 @@ export const FlowReport: React.FC<FlowReportProps> = ({
   onDismissRun,
 }) => {
   const summary = evidence?.summary;
+  // Lý do lấy từ bảng đối chiếu đã lưu cùng verdict (không phải bản dựng lại), để khớp verdict
+  const reasons = analysis?.evidence?.summary?.verdict_reasons || summary?.verdict_reasons || [];
   const traceId = analysis?.trace_id || evidence?.trace_id || flow?.trace_id || '';
 
   const tabs: { id: FlowTab; label: string; badge?: string; danger?: boolean }[] = [
@@ -124,7 +128,13 @@ export const FlowReport: React.FC<FlowReportProps> = ({
       id: 'evidence',
       label: 'Đối chiếu tài liệu',
       badge: summary ? `${summary.matched}/${summary.total_steps}` : undefined,
-      danger: !!summary && (summary.missing > 0 || summary.nfr_fail > 0),
+      // Cùng tiêu chí với RETRY: bước thiếu/thiếu một phần, NFR vi phạm, lời gọi lỗi
+      danger:
+        !!summary &&
+        (summary.missing > 0 ||
+          summary.partial > 0 ||
+          summary.nfr_fail > 0 ||
+          (summary.error_calls ?? 0) > 0),
     },
     { id: 'db', label: 'Chất lượng DB' },
   ];
@@ -140,10 +150,8 @@ export const FlowReport: React.FC<FlowReportProps> = ({
 
           {analysis && (
             <span className={`${styles.verdictBadge} ${verdictClass(analysis.verdict)}`}>
-              {analysis.verdict === 'PASS' && '✓ '}
-              {analysis.verdict === 'WARN' && '⚠ '}
-              {analysis.verdict === 'FAIL' && '✕ '}
-              VERDICT: {analysis.verdict}
+              {VERDICT_ICON[normalizeVerdict(analysis.verdict)]}{' '}
+              {VERDICT_LABEL[normalizeVerdict(analysis.verdict)]} ({analysis.verdict})
             </span>
           )}
 
@@ -209,7 +217,7 @@ export const FlowReport: React.FC<FlowReportProps> = ({
             <span>
               Đã phân tích xong trên trace{' '}
               <code>{(runResult.trace_id || '').slice(0, 16) || '—'}…</code> — verdict{' '}
-              <b>{runResult.verdict}</b>
+              <b>{VERDICT_LABEL[normalizeVerdict(runResult.verdict)]}</b>
               {runResult.detection?.reason ? ` · ${runResult.detection.reason}` : ''}
             </span>
           ) : null}
@@ -275,15 +283,6 @@ export const FlowReport: React.FC<FlowReportProps> = ({
         <>
           {activeTab === 'overview' && (
             <div className={styles.contentGrid}>
-              <TraceMetricsPanel
-                data={metrics}
-                nfrs={evidence?.nfrs || []}
-                traceId={traceId}
-                isLoading={isMetricsLoading}
-                error={metricsError}
-                onRefresh={onReloadMetrics}
-              />
-
               <section className={styles.panel}>
                 <div className={styles.panelHeader}>
                   <div className={styles.panelTitle}>Kết luận phân tích</div>
@@ -291,10 +290,25 @@ export const FlowReport: React.FC<FlowReportProps> = ({
                 </div>
 
                 <div className={styles.panelBody}>
+                  {reasons.length > 0 && (
+                    <div className={`${styles.reasonBox} ${verdictClass(analysis.verdict)}`}>
+                      <div className={styles.reasonTitle}>
+                        {normalizeVerdict(analysis.verdict) === 'RETRY'
+                          ? 'Vi phạm cần sửa'
+                          : 'Lý do chuyển người xử lý'}
+                      </div>
+                      <ul className={styles.reasonList}>
+                        {reasons.map((reason) => (
+                          <li key={reason}>{reason}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                   {summary && (
                     <div className={styles.groundingNote}>
                       Kết luận dưới đây dựa trên bảng đối chiếu tất định: {summary.matched} bước
-                      khớp, {summary.missing} bước thiếu, {summary.nfr_fail} NFR vi phạm.{' '}
+                      khớp, {summary.partial} khớp một phần, {summary.missing} bước thiếu,{' '}
+                      {summary.nfr_fail} NFR vi phạm.{' '}
                       <button
                         type="button"
                         className={styles.inlineLink}
@@ -309,6 +323,16 @@ export const FlowReport: React.FC<FlowReportProps> = ({
                   </div>
                 </div>
               </section>
+
+              <TraceMetricsPanel
+                data={metrics}
+                nfrs={evidence?.nfrs || []}
+                traceId={traceId}
+                isLoading={isMetricsLoading}
+                error={metricsError}
+                onRefresh={onReloadMetrics}
+                onOpenEvidence={() => onChangeTab('evidence')}
+              />
             </div>
           )}
 
