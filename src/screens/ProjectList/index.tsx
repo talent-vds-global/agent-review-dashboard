@@ -14,7 +14,7 @@ export const ProjectList: React.FC = () => {
   };
 
   const handleSelectProject = (projectId: string) => {
-    navigate(`/projects/${projectId}#live`);
+    navigate(`/projects/${projectId}`);
   };
 
   const initials = currentUser?.fullName

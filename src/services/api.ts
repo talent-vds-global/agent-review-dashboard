@@ -16,7 +16,7 @@ export interface AnalysisListItem {
   id: number;
   flow_id: string;
   analysis_type: string;
-  verdict: 'PASS' | 'WARN' | 'FAIL' | string;
+  verdict: 'PASS' | 'RETRY' | 'ESCALATE' | string;
   trace_id?: string | null;
   created_at: string;
 }
@@ -115,7 +115,14 @@ export interface EvidenceReport {
     nfr_pass: number;
     nfr_fail: number;
     extra_calls: number;
+    /** Lời gọi giao thức báo lỗi, không tính mã là kết cục nghiệp vụ của nhánh */
+    error_calls?: number;
+    missing_ratio?: number;
+    /** Verdict tất định: PASS / RETRY / ESCALATE */
     verdict: string;
+    /** Lý do của verdict — với RETRY đây là danh sách vi phạm cần sửa */
+    verdict_reasons?: string[];
+    violation_keys?: string[];
   };
   steps: EvidenceStep[];
   nfrs: EvidenceNfr[];
@@ -127,7 +134,7 @@ export interface FlowAnalysisDetail {
   id?: number;
   flow_id: string;
   analysis_type?: string;
-  verdict: 'PASS' | 'WARN' | 'FAIL' | string;
+  verdict: 'PASS' | 'RETRY' | 'ESCALATE' | string;
   detail: string;
   runtime_flow: string;
   trace_id?: string | null;

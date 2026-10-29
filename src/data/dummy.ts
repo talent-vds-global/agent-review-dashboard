@@ -1,4 +1,4 @@
-import type { RoleType } from './mock';
+export type RoleType = 'developer' | 'leader' | 'tester' | 'operator';
 
 export interface UserProfile {
   id: string;

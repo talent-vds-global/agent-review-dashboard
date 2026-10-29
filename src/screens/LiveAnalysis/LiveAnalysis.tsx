@@ -9,7 +9,6 @@ import styles from './LiveAnalysis.module.css';
 
 interface LiveAnalysisProps {
   initialFlowId?: string;
-  onBackToMock?: () => void;
   onBackToProjects?: () => void;
 }
 
@@ -23,7 +22,6 @@ interface LiveAnalysisProps {
  */
 export const LiveAnalysis: React.FC<LiveAnalysisProps> = ({
   initialFlowId,
-  onBackToMock,
   onBackToProjects,
 }) => {
   const portal = useLiveAnalysis(initialFlowId);
@@ -89,17 +87,12 @@ export const LiveAnalysis: React.FC<LiveAnalysisProps> = ({
         </div>
 
         <div className={styles.headerActions}>
-          <span className={styles.livePill} title="Mọi số liệu trên màn hình lấy từ backend này">
-            <span className={styles.pulseDot} />
-            API THẬT: {BASE_URL}
-          </span>
-
           <button
             type="button"
             className={styles.refreshBtn}
             onClick={reloadOverview}
             disabled={isOverviewLoading || isRefreshing}
-            title="Đọc lại toàn bộ số liệu từ backend"
+            title={`Đọc lại toàn bộ số liệu từ backend (${BASE_URL})`}
           >
             <span>{isRefreshing ? '⏳' : '⟳'}</span>
             <span>{isRefreshing ? 'Đang tải...' : 'Làm mới'}</span>
@@ -117,17 +110,6 @@ export const LiveAnalysis: React.FC<LiveAnalysisProps> = ({
             </button>
           )}
 
-          {onBackToMock && !onBackToProjects && (
-            <button
-              type="button"
-              className={styles.backBtn}
-              onClick={onBackToMock}
-              title="Trở về màn hình Mock Data Dashboard"
-            >
-              <span>←</span>
-              <span>Mock Dashboard</span>
-            </button>
-          )}
         </div>
       </header>
 

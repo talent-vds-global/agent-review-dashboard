@@ -1,6 +1,7 @@
 import React from 'react';
 import type { OverviewFlow, OverviewIssue, OverviewService } from '../../../../services/api';
 import { IssueList } from '../IssueList';
+import { VERDICT_LABEL, normalizeVerdict, verdictTone } from '../../verdict';
 import styles from './ServiceDetail.module.css';
 
 interface ServiceDetailProps {
@@ -10,19 +11,8 @@ interface ServiceDetailProps {
   onOpenIssue: (issue: OverviewIssue) => void;
 }
 
-const VERDICT_LABEL: Record<string, string> = {
-  PASS: 'ĐẠT',
-  WARN: 'CẢNH BÁO',
-  FAIL: 'KHÔNG ĐẠT',
-  UNKNOWN: 'KHÔNG RÕ',
-  NONE: 'CHƯA PHÂN TÍCH',
-};
-
 function verdictClass(verdict: string, s: Record<string, string>): string {
-  if (verdict === 'PASS') return s.vPass;
-  if (verdict === 'WARN') return s.vWarn;
-  if (verdict === 'FAIL') return s.vFail;
-  return s.vNone;
+  return verdictTone(verdict, { pass: s.vPass, retry: s.vWarn, escalate: s.vFail, none: s.vNone });
 }
 
 function formatTime(value?: string): string {
@@ -79,7 +69,7 @@ const FlowRow: React.FC<{ flow: OverviewFlow; onOpen: () => void }> = ({ flow, o
           flow.analyzed && <span className={styles.okPill}>sạch</span>
         )}
         <span className={`${styles.verdictChip} ${verdictClass(flow.verdict, styles)}`}>
-          {VERDICT_LABEL[flow.verdict] || flow.verdict}
+          {VERDICT_LABEL[normalizeVerdict(flow.verdict)]}
         </span>
       </span>
     </button>
@@ -126,7 +116,7 @@ export const ServiceDetail: React.FC<ServiceDetailProps> = ({
           </div>
           <div className={styles.stat}>
             <span className={`${styles.verdictChip} ${verdictClass(service.verdict, styles)}`}>
-              {VERDICT_LABEL[service.verdict] || service.verdict}
+              {VERDICT_LABEL[normalizeVerdict(service.verdict)]}
             </span>
             <span className={styles.statLabel} title="Tính trên các vấn đề quy về chính service này">
               kết luận cho service

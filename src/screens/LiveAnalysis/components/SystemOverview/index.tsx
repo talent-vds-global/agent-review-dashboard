@@ -2,6 +2,7 @@ import React from 'react';
 import type { OverviewIssue, OverviewService, SystemOverview as Overview } from '../../../../services/api';
 import { MetricCard } from '../MetricCard';
 import { IssueList } from '../IssueList';
+import { VERDICT_LABEL, normalizeVerdict, verdictTone } from '../../verdict';
 import styles from './SystemOverview.module.css';
 
 interface SystemOverviewProps {
@@ -19,19 +20,10 @@ const HEALTH_LABEL: Record<string, string> = {
   unknown: 'CHƯA ĐỦ DỮ LIỆU',
 };
 
-const VERDICT_LABEL: Record<string, string> = {
-  PASS: 'ĐẠT',
-  WARN: 'CẢNH BÁO',
-  FAIL: 'KHÔNG ĐẠT',
-  UNKNOWN: 'KHÔNG RÕ',
-  NONE: 'CHƯA PHÂN TÍCH',
-};
-
 function verdictClass(verdict: string): string {
-  if (verdict === 'PASS') return styles.vPass;
-  if (verdict === 'WARN') return styles.vWarn;
-  if (verdict === 'FAIL') return styles.vFail;
-  return styles.vNone;
+  return verdictTone(verdict, {
+    pass: styles.vPass, retry: styles.vWarn, escalate: styles.vFail, none: styles.vNone,
+  });
 }
 
 const ServiceRow: React.FC<{ service: OverviewService; onOpen: () => void }> = ({
@@ -49,7 +41,7 @@ const ServiceRow: React.FC<{ service: OverviewService; onOpen: () => void }> = (
       </span>
 
       <span className={`${styles.verdictChip} ${verdictClass(service.verdict)}`}>
-        {VERDICT_LABEL[service.verdict] || service.verdict}
+        {VERDICT_LABEL[normalizeVerdict(service.verdict)]}
       </span>
 
       <span className={styles.flowCell}>

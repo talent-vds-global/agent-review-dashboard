@@ -3,6 +3,9 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8000}
+        VITE_JAEGER_URL: ${VITE_JAEGER_URL:-http://localhost:16686}
     container_name: qc-portal
     ports:
       - "3000:80"

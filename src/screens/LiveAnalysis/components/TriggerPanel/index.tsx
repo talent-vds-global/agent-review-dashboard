@@ -161,41 +161,37 @@ export const TriggerPanel: React.FC<TriggerPanelProps> = ({ onRunFinished }) => 
 
       {notice && <div className={styles.notice}>{notice}</div>}
 
-      <div className={styles.cards}>
-        <div className={styles.card}>
-          <div className={styles.cardLabel}>Lịch hằng ngày</div>
-          <div className={styles.cardValue}>
-            {scheduler.daily.at && scheduler.enabled ? `${scheduler.daily.at} mỗi ngày` : 'Tắt'}
-          </div>
-          <div className={styles.cardNote}>
-            {scheduler.daily.next_run && scheduler.enabled
-              ? `Lần tới: ${formatTime(scheduler.daily.next_run)}`
-              : 'Đặt SCHEDULE_DAILY_AT để bật'}
-          </div>
-        </div>
-        <div className={styles.card}>
-          <div className={styles.cardLabel}>Theo dõi Confluence</div>
-          <div className={styles.cardValue}>
-            {poll.interval_seconds > 0 && scheduler.enabled
-              ? `Mỗi ${poll.interval_seconds}s`
-              : 'Polling tắt'}
-            {scheduler.confluence_webhook.token_required ? ' · webhook' : ''}
-          </div>
-          <div className={styles.cardNote}>
-            {poll.last ? `Kiểm lần cuối: ${formatTime(poll.last.at)}` : 'Chưa kiểm lần nào'}
-          </div>
-        </div>
-        <div className={styles.card}>
-          <div className={styles.cardLabel}>Hàng đợi</div>
-          <div className={styles.cardValue}>
-            {queue.running_run_id
-              ? `Lượt #${queue.running_run_id} · ${queue.running_flow_id ?? ''}`
-              : 'Rảnh'}
-          </div>
-          <div className={styles.cardNote}>{queue.queued} lượt đang chờ</div>
-        </div>
+      {/* Trạng thái gọn một dòng; hai bảng chi tiết thu vào "Xem chi tiết" */}
+      <div className={styles.statusLine}>
+        <span>
+          <b>Lịch:</b>{' '}
+          {scheduler.daily.at && scheduler.enabled
+            ? `${scheduler.daily.at} mỗi ngày${
+                scheduler.daily.next_run ? ` (lần tới ${formatTime(scheduler.daily.next_run)})` : ''
+              }`
+            : 'tắt'}
+        </span>
+        <span>
+          <b>Confluence:</b>{' '}
+          {poll.interval_seconds > 0 && scheduler.enabled
+            ? `kiểm mỗi ${poll.interval_seconds}s`
+            : 'polling tắt'}
+          {scheduler.confluence_webhook.token_required ? ' · webhook' : ''}
+        </span>
+        <span>
+          <b>Hàng đợi:</b>{' '}
+          {queue.running_run_id
+            ? `đang chạy lượt #${queue.running_run_id} · ${queue.running_flow_id ?? ''}`
+            : 'rảnh'}
+          {queue.queued ? ` · ${queue.queued} lượt chờ` : ''}
+        </span>
       </div>
 
+      <details className={styles.details}>
+        <summary className={styles.detailsSummary}>
+          Xem chi tiết: tài liệu đang theo dõi ({spec_versions.length}) · lượt chạy gần nhất (
+          {runs.length})
+        </summary>
       <div className={styles.columns}>
         <div>
           <div className={styles.subTitle}>Tài liệu đang theo dõi</div>
@@ -277,6 +273,7 @@ export const TriggerPanel: React.FC<TriggerPanelProps> = ({ onRunFinished }) => 
           )}
         </div>
       </div>
+      </details>
     </section>
   );
 };
